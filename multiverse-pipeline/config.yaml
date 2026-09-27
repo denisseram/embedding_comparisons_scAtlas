@@ -3,6 +3,7 @@
 
 name: toy
 global_seed: 20260927          # used for everything that is NOT an explicit seed replicate
+n_jobs: 4                      # worker processes for per-model steps (memory: ~300 MB each)
 
 paths:
   data: data/toy.h5ad
