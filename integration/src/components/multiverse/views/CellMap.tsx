@@ -12,7 +12,7 @@ import { useWidth } from '../d3/useSize';
 import { resolveCellColor } from './cellColor';
 import type { RegionEffect } from '../compute/selection';
 
-const HEX_THRESHOLD = 50_000;
+const HEX_THRESHOLD = 50_000; // "above ~50k cells": hex-binned density from 50,000 cells on
 
 interface Props {
   colorKey: string;
@@ -91,7 +91,7 @@ export default function CellMap({ colorKey, height = 480, title, regionEffects, 
     const { px, py } = screen;
     const dim = INK[theme].neutral;
     const focus = selectedMask ?? hlMask;
-    if (N > HEX_THRESHOLD) {
+    if (N >= HEX_THRESHOLD) {
       drawHex(ctx, px, py, color, focus, dim, width, height);
     } else {
       const r = compact ? 1.6 : 2.2;
