@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Heavy pipeline intermediates (latents, kNN, h5ad). The compact web export
+# in integration/public/multiverse-data/ IS committed.
+multiverse-pipeline/outputs/
+multiverse-pipeline/data/*.h5ad
+multiverse-pipeline/data/ground_truth.csv
+multiverse-pipeline/data/gene_sets.json
+
+.DS_Store
