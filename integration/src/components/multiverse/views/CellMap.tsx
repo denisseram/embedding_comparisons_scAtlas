@@ -145,26 +145,30 @@ export default function CellMap({ colorKey, height = 480, title, regionEffects, 
     [screen, N],
   );
 
-  // lasso / zoom
+  // lasso / zoom: bound once per tool; current tree/positions/selection are read through refs
+  // so re-renders (hover tooltips, recolouring) never re-bind mid-gesture
+  const live = useRef({ tree, screen, selected: state.selectedCells, transform });
+  live.current = { tree, screen, selected: state.selectedCells, transform };
   useEffect(() => {
     const svg = overlay.current!;
     if (tool === 'lasso') {
       return attachLasso(svg, (poly, ev) => {
+        const { tree: t, screen: sc, selected } = live.current;
         const [x0, y0] = [d3.min(poly, (p) => p[0])!, d3.min(poly, (p) => p[1])!];
         const [x1, y1] = [d3.max(poly, (p) => p[0])!, d3.max(poly, (p) => p[1])!];
         const hits: number[] = [];
-        tree.visit((node, ax, ay, bx, by) => {
+        t.visit((node, ax, ay, bx, by) => {
           if (!node.length) {
             let n: d3.QuadtreeLeaf<number> | undefined = node as d3.QuadtreeLeaf<number>;
             do {
               const c = n.data;
-              if (inPolygon(poly, screen.px[c], screen.py[c])) hits.push(c);
+              if (inPolygon(poly, sc.px[c], sc.py[c])) hits.push(c);
             } while ((n = n.next));
           }
           return ax > x1 || bx < x0 || ay > y1 || by < y0;
         });
         let sel = Uint32Array.from(hits);
-        if (ev?.shiftKey && state.selectedCells) sel = Uint32Array.from(new Set([...state.selectedCells, ...hits]));
+        if (ev?.shiftKey && selected) sel = Uint32Array.from(new Set([...selected, ...hits]));
         dispatch({ type: 'selectCells', cells: sel });
       });
     }
@@ -173,11 +177,11 @@ export default function CellMap({ colorKey, height = 480, title, regionEffects, 
       .scaleExtent([1, 40])
       .on('zoom', (ev) => setTransform(ev.transform));
     const s = d3.select(svg).call(zoom);
-    s.call(zoom.transform, transform);
+    s.call(zoom.transform, live.current.transform);
     return () => {
       s.on('.zoom', null);
     };
-  }, [tool, tree, screen, dispatch, state.selectedCells]);
+  }, [tool, dispatch]);
 
   const onMove = (ev: React.PointerEvent) => {
     const r = overlay.current!.getBoundingClientRect();

@@ -81,14 +81,18 @@ export default function ModelMap() {
 
   // interaction: nearest-point hover/click + lasso
   const delaunay = useMemo(() => d3.Delaunay.from(pos), [pos]);
+  // attach the lasso once; read current positions through refs so re-renders never
+  // re-bind the drag behaviour in the middle of a gesture
+  const posRef = useRef(pos);
+  posRef.current = pos;
   useEffect(() => {
     const svg = svgRef.current!;
-    const detach = attachLasso(svg, (poly, ev) => {
-      const ids = models.filter((_, i) => inPolygon(poly, pos[i][0], pos[i][1])).map((m) => m.model_id);
+    return attachLasso(svg, (poly, ev) => {
+      const p = posRef.current;
+      const ids = models.filter((_, i) => inPolygon(poly, p[i][0], p[i][1])).map((m) => m.model_id);
       dispatch({ type: 'selectModels', ids, additive: ev?.shiftKey });
     });
-    return detach;
-  }, [pos, models, dispatch]);
+  }, [models, dispatch]);
 
   const nearest = (ev: React.PointerEvent | React.MouseEvent) => {
     const r = svgRef.current!.getBoundingClientRect();
