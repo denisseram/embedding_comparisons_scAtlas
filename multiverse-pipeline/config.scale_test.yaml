@@ -1,19 +1,19 @@
 # Embedding Multiverse Explorer — single source of configuration.
-# Every decision, seed, k, weight and path used by the pipeline lives here.
+# Scale test: 50,000 cells x 48 models (16 configurations x 3 seeds). Not size-budgeted.
 
-name: toy
+name: scale_test
 global_seed: 20260927          # used for everything that is NOT an explicit seed replicate
 n_jobs: 4                      # worker processes for per-model steps (memory: ~300 MB each)
 
 paths:
-  data: data/toy.h5ad
-  ground_truth: data/ground_truth.csv
-  gene_sets: data/gene_sets.json
-  outputs: outputs/toy          # heavy intermediates (gitignored)
-  export_dir: ../integration/public/multiverse-data
+  data: data/scale_test.h5ad
+  ground_truth: data/scale_test_ground_truth.csv
+  gene_sets: data/scale_test_gene_sets.json
+  outputs: outputs/scale_test
+  export_dir: outputs/scale_test/web_export   # never written into the site
 
 simulate:
-  n_cells: 5000
+  n_cells: 50000
   n_genes: 2000
   studies: {A: [s1, s2, s3], B: [s4, s5, s6]}
   tissue2_samples: [s5, s6]     # P2: tissue 2 comes only from study B
@@ -41,10 +41,10 @@ simulate:
 
 decisions:
   n_hvg: [500, 1500]
-  hvg_batch_aware: [false, true]
+  hvg_batch_aware: [false]
   exclude_igx: [false, true]
   batch_key: [study, sample]
-  method: [pca, harmony, combat_pca]
+  method: [pca, harmony]
   seeds: [0, 1, 2]
 
 integration:
@@ -70,7 +70,7 @@ metrics:
 
 measures:
   k: 15                         # switchable: 15 or 50
-  modes: [jaccard, composition] # first = pre-registered primary; composition = exploratory (see VALIDATION.md)
+  modes: [jaccard]
   sigma_eps: 0.05
   consensus_threshold: 0.8
   agreement_n_cells: 2000

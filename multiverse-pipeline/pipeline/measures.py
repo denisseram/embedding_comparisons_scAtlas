@@ -47,6 +47,36 @@ def delta(A: np.ndarray, B: np.ndarray) -> np.ndarray:
     return (1.0 - inter / (2 * k - inter)).astype(np.float32)
 
 
+def delta_composition(Ca: np.ndarray, Cb: np.ndarray) -> np.ndarray:
+    """Exploratory variant: 1 - overlap of neighbour micro-cluster composition.
+    Ca, Cb: [n, n_blocks] neighbour counts per block (rows sum to k)."""
+    k = Ca[0].sum()
+    return (1.0 - np.minimum(Ca, Cb).sum(1) / k).astype(np.float32)
+
+
+def micro_clusters(cons: np.ndarray, target: int, seed: int) -> tuple[np.ndarray, float]:
+    """Label-free partition of the consensus graph with the number of blocks closest to target."""
+    from pipeline.metrics import knn_graph, leiden
+    g = knn_graph(cons)
+    best = None
+    for res in [0.5, 1, 2, 3, 5, 8, 12, 20]:
+        lab = leiden(g, res, seed)
+        n = lab.max() + 1
+        if best is None or abs(n - target) < abs(best[0].max() + 1 - target):
+            best = (lab, res)
+    return best
+
+
+def composition_rep(nbrs: np.ndarray, blocks: np.ndarray) -> np.ndarray:
+    M, N, k = nbrs.shape
+    nb = blocks.max() + 1
+    rep = np.zeros((M, N, nb), np.uint8)
+    rows = np.repeat(np.arange(N), k)
+    for m in range(M):
+        np.add.at(rep[m], (rows, blocks[nbrs[m]].ravel()), 1)
+    return rep
+
+
 def neighbour_counts(nbr_sets: np.ndarray, n_cells: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """nbr_sets: [n, L] pooled neighbour ids per cell. Returns flat (row, id, count) of unique ids."""
     n, L = nbr_sets.shape
@@ -77,6 +107,23 @@ def consensus(nbrs: np.ndarray, k: int, threshold: float, chunk: int = 1000):
     return cons, stab
 
 
+def consensus_share(nbrs: np.ndarray, threshold: float, chunk: int = 1000) -> np.ndarray:
+    """Per model: mean fraction of its k neighbours that are consensus neighbours
+    (present in >= threshold of all models' kNN sets). Model-level summary of stability."""
+    M, N, k = nbrs.shape
+    need = int(np.ceil(threshold * M - 1e-9))
+    share = np.zeros(M)
+    for s0 in range(0, N, chunk):
+        s1 = min(N, s0 + chunk)
+        pooled = np.transpose(nbrs[:, s0:s1, :], (1, 0, 2)).reshape(s1 - s0, M * k)
+        row, ids, cnt = neighbour_counts(pooled, N)
+        keys = np.sort(row[cnt >= need] * N + ids[cnt >= need])
+        base = np.arange(s1 - s0, dtype=np.int64)[:, None] * N
+        for m in range(M):
+            share[m] += np.isin(base + nbrs[m, s0:s1], keys, assume_unique=False).sum()
+    return (share / (N * k)).astype(np.float32)
+
+
 def smooth(x: np.ndarray, ref: np.ndarray) -> np.ndarray:
     """Mean of x over each cell and its reference-graph neighbours. x: [..., N]."""
     return ((x + x[..., ref].sum(-1)) / (ref.shape[1] + 1)).astype(np.float32)
@@ -90,12 +137,13 @@ def rank_z(value: np.ndarray, pool: np.ndarray) -> np.ndarray:
     return norm.ppf(r).astype(np.float32)
 
 
-def matched_pairs(configs: pd.DataFrame) -> pd.DataFrame:
+def matched_pairs(configs: pd.DataFrame, factors: list[str] | None = None) -> pd.DataFrame:
     """All configuration pairs that differ in exactly one factor."""
+    factors = factors or FACTORS
     rows = []
     cfg_rows = configs.to_dict("records")
-    for F in FACTORS:
-        others = [f for f in FACTORS if f != F]
+    for F in factors:
+        others = [f for f in factors if f != F]
         groups: dict[tuple, list] = {}
         for c in cfg_rows:
             groups.setdefault(tuple(c[f] for f in others), []).append(c)
@@ -123,8 +171,13 @@ def stratified_sample(labels: np.ndarray, n: int, seed: int) -> np.ndarray:
 
 
 # ----------------------------------------------------------------------------- main
-def main(cfg: dict | None = None) -> dict:
+def main(cfg: dict | None = None, mode: str | None = None) -> dict:
+    """mode: 'jaccard' (pre-registered primary measure) or 'composition' (exploratory)."""
     cfg = cfg or load_config()
+    modes = cfg["measures"].get("modes", ["jaccard"])
+    mode = mode or modes[0]
+    primary = mode == modes[0]
+    sfx = "" if primary else f"_{mode}"
     t0 = time.perf_counter()
     mc, gs = cfg["measures"], cfg["global_seed"]
     k, eps = mc["k"], mc["sigma_eps"]
@@ -148,11 +201,21 @@ def main(cfg: dict | None = None) -> dict:
     stab_seed /= len(by_cfg)
     log.info(f"stability: all-models median {np.median(stab_all):.2f}, seed-only median {np.median(stab_seed):.2f}")
 
+    if mode == "jaccard":
+        rep, dfun = nbrs, delta
+    elif mode == "composition":
+        blocks, bres = micro_clusters(cons, max(2, round(N / (5 * k))), gs)
+        log.info(f"composition mode: {blocks.max() + 1} consensus micro-clusters (resolution {bres})")
+        np.save(od / "micro_clusters.npy", blocks)
+        rep, dfun = composition_rep(nbrs, blocks), delta_composition
+    else:
+        raise ValueError(f"unknown measures mode {mode!r}")
+
     # --- seed noise per configuration ----------------------------------------------------
     seed_delta = np.zeros((len(configs), len(seed_pairs), N), np.float32)
     for ci, c in enumerate(configs.config_id):
         for pi, (i, j) in enumerate(seed_pairs):
-            seed_delta[ci, pi] = delta(nbrs[by_cfg[c][i]], nbrs[by_cfg[c][j]])
+            seed_delta[ci, pi] = dfun(rep[by_cfg[c][i]], rep[by_cfg[c][j]])
     cfg_index = {c: i for i, c in enumerate(configs.config_id)}
     m_cfg = seed_delta.mean(1)
     v_cfg = seed_delta.var(1, ddof=1)
@@ -178,17 +241,18 @@ def main(cfg: dict | None = None) -> dict:
     off_diag = [(i, j) for i in range(S) for j in range(S) if i != j]
     for r in pairs.itertuples():
         A, B = by_cfg[r.config_a], by_cfg[r.config_b]
-        d = np.mean([delta(nbrs[A[i]], nbrs[B[j]]) for i, j in off_diag], axis=0)
+        d = np.mean([dfun(rep[A[i]], rep[B[j]]) for i, j in off_diag], axis=0)
         mu, sd = noise(r.config_a, r.config_b)
         pair_delta[:, r.pair_id] = d
         pair_z[r.pair_id] = (d - mu) / sd
         pair_rz[r.pair_id] = rank_z(d, pool(r.config_a, r.config_b))
 
-    factors = FACTORS + ["seed"]
+    active = [F for F in FACTORS if (pairs.factor == F).any()]  # factors with >1 level in the design
+    factors = active + ["seed"]
     E = np.zeros((N, len(factors)), np.float32)
     H = np.zeros_like(E)
     E_rank = np.zeros_like(E)
-    for fi, F in enumerate(FACTORS):
+    for fi, F in enumerate(active):
         sel = pairs.factor.values == F
         E[:, fi] = pair_z[sel].mean(0)
         H[:, fi] = pair_z[sel].std(0, ddof=1)
@@ -216,11 +280,11 @@ def main(cfg: dict | None = None) -> dict:
     obs = ad.read_h5ad(p(cfg, "data"), backed="r").obs
     labels = pd.Categorical(obs[cfg["metrics"]["label_key"]]).codes
     sample_cells = stratified_sample(labels, mc["agreement_n_cells"], gs)
-    sub = nbrs[:, sample_cells, :]
+    sub = rep[:, sample_cells, :]
     A_mat = np.zeros((M, M), np.float32)
     for a in range(M):
         for b in range(a + 1, M):
-            A_mat[a, b] = A_mat[b, a] = delta(sub[a], sub[b]).mean()
+            A_mat[a, b] = A_mat[b, a] = dfun(sub[a], sub[b]).mean()
 
     # --- calibrated change versus reference models -------------------------------------------
     met = pd.read_csv(out_dir(cfg) / "metrics.csv", index_col=0).loc[models.model_id]
@@ -236,44 +300,45 @@ def main(cfg: dict | None = None) -> dict:
         ca = models.config_id[a]
         for b in range(M):
             mu, sd = noise(ca, models.config_id[b])
-            z_ref[ri, :, b] = (delta(nbrs[a], nbrs[b]) - mu) / sd
+            z_ref[ri, :, b] = (dfun(rep[a], rep[b]) - mu) / sd
 
     # --- paper-style asymmetric graph dissimilarity over matched pairs (baseline) ----------
     from pipeline.metrics import graph_dissimilarity
+    gd = None
     dist = np.load(out_dir(cfg) / "knn50_dist.npy", mmap_mode="r")
     lat_dir = out_dir(cfg, "latent")
     q = cfg["metrics"]["graph_dissim_quantile"]
-    gd = np.zeros(N, np.float64)
-    for r in pairs.itertuples():
+    for r in (pairs.itertuples() if primary else []):
+        if gd is None:
+            gd = np.zeros(N, np.float64)
         a, b = by_cfg[r.config_a][0], by_cfg[r.config_b][1 % S]
         la = np.load(lat_dir / f"{models.model_id[a]}.npy")
         lb = np.load(lat_dir / f"{models.model_id[b]}.npy")
         da, db = np.asarray(dist[a, :, :k]), np.asarray(dist[b, :, :k])
         gd += 0.5 * (np.abs(graph_dissimilarity(la, lb, nbrs[a], da, db, q))
                      + np.abs(graph_dissimilarity(lb, la, nbrs[b], db, da, q)))
-    gd /= P
+    if gd is not None:
+        gd /= P
 
     # --- save ---------------------------------------------------------------------------------
-    np.save(od / "consensus_knn.npy", cons)
-    np.save(od / "stability_all.npy", stab_all)
-    np.save(od / "stability_seed.npy", stab_seed)
-    np.save(od / "seed_delta.npy", seed_delta)
-    pairs.to_csv(od / "pairs.csv", index=False)
-    np.save(od / "pair_delta.npy", pair_delta)
-    np.save(od / "pair_z.npy", pair_z)
-    np.save(od / "E.npy", E)
-    np.save(od / "H.npy", H)
-    np.save(od / "E_rank.npy", E_rank)
-    np.save(od / "agreement.npy", A_mat)
-    np.save(od / "agreement_cells.npy", sample_cells)
-    np.save(od / "z_vs_ref.npy", z_ref)
-    np.save(od / "paper_graph_dissim.npy", gd.astype(np.float32))
-    (od / "meta.json").write_text(json.dumps({"factors": factors, "k": k, "references": refs,
-                                              "configs": configs.config_id.tolist()}, indent=1))
-    append_runtime(cfg, "measures", time.perf_counter() - t0)
+    if primary:
+        np.save(od / "consensus_knn.npy", cons)
+        np.save(od / "stability_all.npy", stab_all)
+        np.save(od / "stability_seed.npy", stab_seed)
+        np.save(od / "model_consensus_share.npy", consensus_share(nbrs, mc["consensus_threshold"]))
+        pairs.to_csv(od / "pairs.csv", index=False)
+        np.save(od / "agreement_cells.npy", sample_cells)
+        np.save(od / "paper_graph_dissim.npy", gd.astype(np.float32))
+        (od / "meta.json").write_text(json.dumps({"factors": factors, "k": k, "references": refs, "modes": modes,
+                                                  "configs": configs.config_id.tolist()}, indent=1))
+    for name, arr in [("seed_delta", seed_delta), ("pair_delta", pair_delta), ("pair_z", pair_z), ("E", E),
+                      ("H", H), ("E_rank", E_rank), ("agreement", A_mat), ("z_vs_ref", z_ref)]:
+        np.save(od / f"{name}{sfx}.npy", arr)
+    append_runtime(cfg, f"measures_{mode}", time.perf_counter() - t0)
     log.info(f"measures done in {time.perf_counter() - t0:.1f}s; references: {refs}")
     return {"E": E, "H": H, "factors": factors}
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    main(mode=sys.argv[1] if len(sys.argv) > 1 else None)

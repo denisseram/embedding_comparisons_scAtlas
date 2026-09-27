@@ -107,13 +107,16 @@ def region_table(adata: ad.AnnData, labels: np.ndarray, E: np.ndarray, H: np.nda
     return out
 
 
-def main(cfg: dict | None = None) -> None:
+def main(cfg: dict | None = None, mode: str | None = None) -> None:
     cfg = cfg or load_config()
+    modes = cfg["measures"].get("modes", ["jaccard"])
+    mode = mode or modes[0]
+    sfx = "" if mode == modes[0] else f"_{mode}"
     t0 = time.perf_counter()
     od = out_dir(cfg, "measures")
     meta = json.loads((od / "meta.json").read_text())
     factors = meta["factors"]
-    E, H = np.load(od / "E.npy"), np.load(od / "H.npy")
+    E, H = np.load(od / f"E{sfx}.npy"), np.load(od / f"H{sfx}.npy")
     cons = np.load(od / "consensus_knn.npy")
     real = [i for i, F in enumerate(factors) if F != "seed"]
     labels, res = find_regions(cons, E[:, real], cfg["regions"], cfg["global_seed"])
@@ -121,18 +124,19 @@ def main(cfg: dict | None = None) -> None:
     if not (cfg["regions"]["min_regions"] <= n <= cfg["regions"]["max_regions"]):
         log_decision(cfg, f"regions: no resolution gave {cfg['regions']['min_regions']}-"
                           f"{cfg['regions']['max_regions']} regions; using {n} at resolution {res}.")
-    log.info(f"{n} regions at resolution {res}")
+    log.info(f"[{mode}] {n} regions at resolution {res}")
     adata = load_lognorm(cfg)
     table = region_table(adata, labels, E, H, factors, np.load(od / "stability_all.npy"),
                          np.load(od / "stability_seed.npy"), cfg["regions"]["n_top_genes"])
-    np.save(od / "regions.npy", labels)
-    (od / "regions.json").write_text(json.dumps({"resolution": res, "regions": table}, indent=1))
+    np.save(od / f"regions{sfx}.npy", labels)
+    (od / f"regions{sfx}.json").write_text(json.dumps({"resolution": res, "regions": table}, indent=1))
     for r in sorted(table, key=lambda r: -r["total_effect"]):
         log.info(f"{r['label']:28s} n={r['size']:4d} total|E|={r['total_effect']:.2f} "
                  f"stab={r['stability_all']:.3f} qc_dev={r['qc_deviation']:.2f} "
                  f"planted={max(r['comp_planted_effect'], key=r['comp_planted_effect'].get)}")
-    append_runtime(cfg, "regions", time.perf_counter() - t0)
+    append_runtime(cfg, f"regions_{mode}", time.perf_counter() - t0)
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    main(mode=sys.argv[1] if len(sys.argv) > 1 else None)

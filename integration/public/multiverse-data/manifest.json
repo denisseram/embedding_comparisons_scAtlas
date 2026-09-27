@@ -1,0 +1,1852 @@
+{
+ "schema_version": "1.0.0",
+ "generated_at": "2026-09-27T15:24:26+00:00",
+ "dataset": {
+  "name": "toy",
+  "n_cells": 5000,
+  "n_genes": 2000,
+  "n_models": 144,
+  "n_configs": 48,
+  "n_pairs": 144,
+  "seeds": [
+   0,
+   1,
+   2
+  ]
+ },
+ "factors": [
+  {
+   "name": "n_hvg",
+   "levels": [
+    "500",
+    "1500"
+   ]
+  },
+  {
+   "name": "hvg_batch_aware",
+   "levels": [
+    false,
+    true
+   ]
+  },
+  {
+   "name": "exclude_igx",
+   "levels": [
+    false,
+    true
+   ]
+  },
+  {
+   "name": "batch_key",
+   "levels": [
+    "study",
+    "sample"
+   ]
+  },
+  {
+   "name": "method",
+   "levels": [
+    "pca",
+    "harmony",
+    "combat_pca"
+   ]
+  }
+ ],
+ "measure_factors": [
+  "n_hvg",
+  "hvg_batch_aware",
+  "exclude_igx",
+  "batch_key",
+  "method",
+  "seed"
+ ],
+ "measure": {
+  "k": 15,
+  "modes": [
+   "jaccard",
+   "composition"
+  ],
+  "primary_mode": "jaccard",
+  "mode_labels": {
+   "jaccard": "Neighbour identity (pre-registered)",
+   "composition": "Neighbour composition (exploratory)"
+  }
+ },
+ "metrics": [
+  {
+   "name": "ARI",
+   "group": "bio",
+   "direction": "higher_is_better"
+  },
+  {
+   "name": "NMI",
+   "group": "bio",
+   "direction": "higher_is_better"
+  },
+  {
+   "name": "moransI_markers_T-A",
+   "group": "bio",
+   "direction": "higher_is_better"
+  },
+  {
+   "name": "moransI_markers_T-B",
+   "group": "bio",
+   "direction": "higher_is_better"
+  },
+  {
+   "name": "moransI_markers_B",
+   "group": "bio",
+   "direction": "higher_is_better"
+  },
+  {
+   "name": "moransI_markers_Myeloid",
+   "group": "bio",
+   "direction": "higher_is_better"
+  },
+  {
+   "name": "moransI_markers_NK",
+   "group": "bio",
+   "direction": "higher_is_better"
+  },
+  {
+   "name": "moransI_markers_Epithelial",
+   "group": "bio",
+   "direction": "higher_is_better"
+  },
+  {
+   "name": "moransI_markers_Ciliated",
+   "group": "bio",
+   "direction": "higher_is_better"
+  },
+  {
+   "name": "moransI_interferon",
+   "group": "bio",
+   "direction": "higher_is_better"
+  },
+  {
+   "name": "moransI_IGX",
+   "group": "bio",
+   "direction": "higher_is_better"
+  },
+  {
+   "name": "moransI_log_total_counts",
+   "group": "bio",
+   "direction": "higher_is_better"
+  },
+  {
+   "name": "moransI_pct_mito",
+   "group": "bio",
+   "direction": "higher_is_better"
+  },
+  {
+   "name": "moransI_doublet_score",
+   "group": "bio",
+   "direction": "higher_is_better"
+  },
+  {
+   "name": "kBET_like",
+   "group": "batch",
+   "direction": "higher_is_better"
+  },
+  {
+   "name": "graph_iLISI",
+   "group": "batch",
+   "direction": "higher_is_better"
+  },
+  {
+   "name": "PCR_comparison",
+   "group": "batch",
+   "direction": "higher_is_better"
+  }
+ ],
+ "aggregates": [
+  {
+   "name": "overall",
+   "group": "aggregate"
+  },
+  {
+   "name": "bio",
+   "group": "aggregate"
+  },
+  {
+   "name": "batch",
+   "group": "aggregate"
+  }
+ ],
+ "weights": {
+  "batch": 0.4,
+  "bio": 0.6
+ },
+ "model_order": [
+  "pca.n500.ba0.ex0.study.s0",
+  "pca.n500.ba0.ex0.study.s1",
+  "pca.n500.ba0.ex0.study.s2",
+  "harmony.n500.ba0.ex0.study.s0",
+  "harmony.n500.ba0.ex0.study.s1",
+  "harmony.n500.ba0.ex0.study.s2",
+  "combat_pca.n500.ba0.ex0.study.s0",
+  "combat_pca.n500.ba0.ex0.study.s1",
+  "combat_pca.n500.ba0.ex0.study.s2",
+  "pca.n500.ba0.ex0.sample.s0",
+  "pca.n500.ba0.ex0.sample.s1",
+  "pca.n500.ba0.ex0.sample.s2",
+  "harmony.n500.ba0.ex0.sample.s0",
+  "harmony.n500.ba0.ex0.sample.s1",
+  "harmony.n500.ba0.ex0.sample.s2",
+  "combat_pca.n500.ba0.ex0.sample.s0",
+  "combat_pca.n500.ba0.ex0.sample.s1",
+  "combat_pca.n500.ba0.ex0.sample.s2",
+  "pca.n500.ba0.ex1.study.s0",
+  "pca.n500.ba0.ex1.study.s1",
+  "pca.n500.ba0.ex1.study.s2",
+  "harmony.n500.ba0.ex1.study.s0",
+  "harmony.n500.ba0.ex1.study.s1",
+  "harmony.n500.ba0.ex1.study.s2",
+  "combat_pca.n500.ba0.ex1.study.s0",
+  "combat_pca.n500.ba0.ex1.study.s1",
+  "combat_pca.n500.ba0.ex1.study.s2",
+  "pca.n500.ba0.ex1.sample.s0",
+  "pca.n500.ba0.ex1.sample.s1",
+  "pca.n500.ba0.ex1.sample.s2",
+  "harmony.n500.ba0.ex1.sample.s0",
+  "harmony.n500.ba0.ex1.sample.s1",
+  "harmony.n500.ba0.ex1.sample.s2",
+  "combat_pca.n500.ba0.ex1.sample.s0",
+  "combat_pca.n500.ba0.ex1.sample.s1",
+  "combat_pca.n500.ba0.ex1.sample.s2",
+  "pca.n500.ba1.ex0.study.s0",
+  "pca.n500.ba1.ex0.study.s1",
+  "pca.n500.ba1.ex0.study.s2",
+  "harmony.n500.ba1.ex0.study.s0",
+  "harmony.n500.ba1.ex0.study.s1",
+  "harmony.n500.ba1.ex0.study.s2",
+  "combat_pca.n500.ba1.ex0.study.s0",
+  "combat_pca.n500.ba1.ex0.study.s1",
+  "combat_pca.n500.ba1.ex0.study.s2",
+  "pca.n500.ba1.ex0.sample.s0",
+  "pca.n500.ba1.ex0.sample.s1",
+  "pca.n500.ba1.ex0.sample.s2",
+  "harmony.n500.ba1.ex0.sample.s0",
+  "harmony.n500.ba1.ex0.sample.s1",
+  "harmony.n500.ba1.ex0.sample.s2",
+  "combat_pca.n500.ba1.ex0.sample.s0",
+  "combat_pca.n500.ba1.ex0.sample.s1",
+  "combat_pca.n500.ba1.ex0.sample.s2",
+  "pca.n500.ba1.ex1.study.s0",
+  "pca.n500.ba1.ex1.study.s1",
+  "pca.n500.ba1.ex1.study.s2",
+  "harmony.n500.ba1.ex1.study.s0",
+  "harmony.n500.ba1.ex1.study.s1",
+  "harmony.n500.ba1.ex1.study.s2",
+  "combat_pca.n500.ba1.ex1.study.s0",
+  "combat_pca.n500.ba1.ex1.study.s1",
+  "combat_pca.n500.ba1.ex1.study.s2",
+  "pca.n500.ba1.ex1.sample.s0",
+  "pca.n500.ba1.ex1.sample.s1",
+  "pca.n500.ba1.ex1.sample.s2",
+  "harmony.n500.ba1.ex1.sample.s0",
+  "harmony.n500.ba1.ex1.sample.s1",
+  "harmony.n500.ba1.ex1.sample.s2",
+  "combat_pca.n500.ba1.ex1.sample.s0",
+  "combat_pca.n500.ba1.ex1.sample.s1",
+  "combat_pca.n500.ba1.ex1.sample.s2",
+  "pca.n1500.ba0.ex0.study.s0",
+  "pca.n1500.ba0.ex0.study.s1",
+  "pca.n1500.ba0.ex0.study.s2",
+  "harmony.n1500.ba0.ex0.study.s0",
+  "harmony.n1500.ba0.ex0.study.s1",
+  "harmony.n1500.ba0.ex0.study.s2",
+  "combat_pca.n1500.ba0.ex0.study.s0",
+  "combat_pca.n1500.ba0.ex0.study.s1",
+  "combat_pca.n1500.ba0.ex0.study.s2",
+  "pca.n1500.ba0.ex0.sample.s0",
+  "pca.n1500.ba0.ex0.sample.s1",
+  "pca.n1500.ba0.ex0.sample.s2",
+  "harmony.n1500.ba0.ex0.sample.s0",
+  "harmony.n1500.ba0.ex0.sample.s1",
+  "harmony.n1500.ba0.ex0.sample.s2",
+  "combat_pca.n1500.ba0.ex0.sample.s0",
+  "combat_pca.n1500.ba0.ex0.sample.s1",
+  "combat_pca.n1500.ba0.ex0.sample.s2",
+  "pca.n1500.ba0.ex1.study.s0",
+  "pca.n1500.ba0.ex1.study.s1",
+  "pca.n1500.ba0.ex1.study.s2",
+  "harmony.n1500.ba0.ex1.study.s0",
+  "harmony.n1500.ba0.ex1.study.s1",
+  "harmony.n1500.ba0.ex1.study.s2",
+  "combat_pca.n1500.ba0.ex1.study.s0",
+  "combat_pca.n1500.ba0.ex1.study.s1",
+  "combat_pca.n1500.ba0.ex1.study.s2",
+  "pca.n1500.ba0.ex1.sample.s0",
+  "pca.n1500.ba0.ex1.sample.s1",
+  "pca.n1500.ba0.ex1.sample.s2",
+  "harmony.n1500.ba0.ex1.sample.s0",
+  "harmony.n1500.ba0.ex1.sample.s1",
+  "harmony.n1500.ba0.ex1.sample.s2",
+  "combat_pca.n1500.ba0.ex1.sample.s0",
+  "combat_pca.n1500.ba0.ex1.sample.s1",
+  "combat_pca.n1500.ba0.ex1.sample.s2",
+  "pca.n1500.ba1.ex0.study.s0",
+  "pca.n1500.ba1.ex0.study.s1",
+  "pca.n1500.ba1.ex0.study.s2",
+  "harmony.n1500.ba1.ex0.study.s0",
+  "harmony.n1500.ba1.ex0.study.s1",
+  "harmony.n1500.ba1.ex0.study.s2",
+  "combat_pca.n1500.ba1.ex0.study.s0",
+  "combat_pca.n1500.ba1.ex0.study.s1",
+  "combat_pca.n1500.ba1.ex0.study.s2",
+  "pca.n1500.ba1.ex0.sample.s0",
+  "pca.n1500.ba1.ex0.sample.s1",
+  "pca.n1500.ba1.ex0.sample.s2",
+  "harmony.n1500.ba1.ex0.sample.s0",
+  "harmony.n1500.ba1.ex0.sample.s1",
+  "harmony.n1500.ba1.ex0.sample.s2",
+  "combat_pca.n1500.ba1.ex0.sample.s0",
+  "combat_pca.n1500.ba1.ex0.sample.s1",
+  "combat_pca.n1500.ba1.ex0.sample.s2",
+  "pca.n1500.ba1.ex1.study.s0",
+  "pca.n1500.ba1.ex1.study.s1",
+  "pca.n1500.ba1.ex1.study.s2",
+  "harmony.n1500.ba1.ex1.study.s0",
+  "harmony.n1500.ba1.ex1.study.s1",
+  "harmony.n1500.ba1.ex1.study.s2",
+  "combat_pca.n1500.ba1.ex1.study.s0",
+  "combat_pca.n1500.ba1.ex1.study.s1",
+  "combat_pca.n1500.ba1.ex1.study.s2",
+  "pca.n1500.ba1.ex1.sample.s0",
+  "pca.n1500.ba1.ex1.sample.s1",
+  "pca.n1500.ba1.ex1.sample.s2",
+  "harmony.n1500.ba1.ex1.sample.s0",
+  "harmony.n1500.ba1.ex1.sample.s1",
+  "harmony.n1500.ba1.ex1.sample.s2",
+  "combat_pca.n1500.ba1.ex1.sample.s0",
+  "combat_pca.n1500.ba1.ex1.sample.s1",
+  "combat_pca.n1500.ba1.ex1.sample.s2"
+ ],
+ "configs": [
+  "pca.n500.ba0.ex0.study",
+  "harmony.n500.ba0.ex0.study",
+  "combat_pca.n500.ba0.ex0.study",
+  "pca.n500.ba0.ex0.sample",
+  "harmony.n500.ba0.ex0.sample",
+  "combat_pca.n500.ba0.ex0.sample",
+  "pca.n500.ba0.ex1.study",
+  "harmony.n500.ba0.ex1.study",
+  "combat_pca.n500.ba0.ex1.study",
+  "pca.n500.ba0.ex1.sample",
+  "harmony.n500.ba0.ex1.sample",
+  "combat_pca.n500.ba0.ex1.sample",
+  "pca.n500.ba1.ex0.study",
+  "harmony.n500.ba1.ex0.study",
+  "combat_pca.n500.ba1.ex0.study",
+  "pca.n500.ba1.ex0.sample",
+  "harmony.n500.ba1.ex0.sample",
+  "combat_pca.n500.ba1.ex0.sample",
+  "pca.n500.ba1.ex1.study",
+  "harmony.n500.ba1.ex1.study",
+  "combat_pca.n500.ba1.ex1.study",
+  "pca.n500.ba1.ex1.sample",
+  "harmony.n500.ba1.ex1.sample",
+  "combat_pca.n500.ba1.ex1.sample",
+  "pca.n1500.ba0.ex0.study",
+  "harmony.n1500.ba0.ex0.study",
+  "combat_pca.n1500.ba0.ex0.study",
+  "pca.n1500.ba0.ex0.sample",
+  "harmony.n1500.ba0.ex0.sample",
+  "combat_pca.n1500.ba0.ex0.sample",
+  "pca.n1500.ba0.ex1.study",
+  "harmony.n1500.ba0.ex1.study",
+  "combat_pca.n1500.ba0.ex1.study",
+  "pca.n1500.ba0.ex1.sample",
+  "harmony.n1500.ba0.ex1.sample",
+  "combat_pca.n1500.ba0.ex1.sample",
+  "pca.n1500.ba1.ex0.study",
+  "harmony.n1500.ba1.ex0.study",
+  "combat_pca.n1500.ba1.ex0.study",
+  "pca.n1500.ba1.ex0.sample",
+  "harmony.n1500.ba1.ex0.sample",
+  "combat_pca.n1500.ba1.ex0.sample",
+  "pca.n1500.ba1.ex1.study",
+  "harmony.n1500.ba1.ex1.study",
+  "combat_pca.n1500.ba1.ex1.study",
+  "pca.n1500.ba1.ex1.sample",
+  "harmony.n1500.ba1.ex1.sample",
+  "combat_pca.n1500.ba1.ex1.sample"
+ ],
+ "references": [
+  "combat_pca.n1500.ba1.ex1.sample.s2",
+  "combat_pca.n1500.ba0.ex0.sample.s0",
+  "harmony.n500.ba1.ex0.sample.s2"
+ ],
+ "neighbor_models": [
+  "combat_pca.n1500.ba1.ex1.sample.s2",
+  "pca.n1500.ba1.ex1.sample.s2",
+  "harmony.n1500.ba1.ex1.sample.s2"
+ ],
+ "pairs": [
+  {
+   "pair_id": 0,
+   "factor": "n_hvg",
+   "config_a": "pca.n1500.ba0.ex0.study",
+   "config_b": "pca.n500.ba0.ex0.study",
+   "level_a": "1500",
+   "level_b": "500"
+  },
+  {
+   "pair_id": 1,
+   "factor": "n_hvg",
+   "config_a": "harmony.n1500.ba0.ex0.study",
+   "config_b": "harmony.n500.ba0.ex0.study",
+   "level_a": "1500",
+   "level_b": "500"
+  },
+  {
+   "pair_id": 2,
+   "factor": "n_hvg",
+   "config_a": "combat_pca.n1500.ba0.ex0.study",
+   "config_b": "combat_pca.n500.ba0.ex0.study",
+   "level_a": "1500",
+   "level_b": "500"
+  },
+  {
+   "pair_id": 3,
+   "factor": "n_hvg",
+   "config_a": "pca.n1500.ba0.ex0.sample",
+   "config_b": "pca.n500.ba0.ex0.sample",
+   "level_a": "1500",
+   "level_b": "500"
+  },
+  {
+   "pair_id": 4,
+   "factor": "n_hvg",
+   "config_a": "harmony.n1500.ba0.ex0.sample",
+   "config_b": "harmony.n500.ba0.ex0.sample",
+   "level_a": "1500",
+   "level_b": "500"
+  },
+  {
+   "pair_id": 5,
+   "factor": "n_hvg",
+   "config_a": "combat_pca.n1500.ba0.ex0.sample",
+   "config_b": "combat_pca.n500.ba0.ex0.sample",
+   "level_a": "1500",
+   "level_b": "500"
+  },
+  {
+   "pair_id": 6,
+   "factor": "n_hvg",
+   "config_a": "pca.n1500.ba0.ex1.study",
+   "config_b": "pca.n500.ba0.ex1.study",
+   "level_a": "1500",
+   "level_b": "500"
+  },
+  {
+   "pair_id": 7,
+   "factor": "n_hvg",
+   "config_a": "harmony.n1500.ba0.ex1.study",
+   "config_b": "harmony.n500.ba0.ex1.study",
+   "level_a": "1500",
+   "level_b": "500"
+  },
+  {
+   "pair_id": 8,
+   "factor": "n_hvg",
+   "config_a": "combat_pca.n1500.ba0.ex1.study",
+   "config_b": "combat_pca.n500.ba0.ex1.study",
+   "level_a": "1500",
+   "level_b": "500"
+  },
+  {
+   "pair_id": 9,
+   "factor": "n_hvg",
+   "config_a": "pca.n1500.ba0.ex1.sample",
+   "config_b": "pca.n500.ba0.ex1.sample",
+   "level_a": "1500",
+   "level_b": "500"
+  },
+  {
+   "pair_id": 10,
+   "factor": "n_hvg",
+   "config_a": "harmony.n1500.ba0.ex1.sample",
+   "config_b": "harmony.n500.ba0.ex1.sample",
+   "level_a": "1500",
+   "level_b": "500"
+  },
+  {
+   "pair_id": 11,
+   "factor": "n_hvg",
+   "config_a": "combat_pca.n1500.ba0.ex1.sample",
+   "config_b": "combat_pca.n500.ba0.ex1.sample",
+   "level_a": "1500",
+   "level_b": "500"
+  },
+  {
+   "pair_id": 12,
+   "factor": "n_hvg",
+   "config_a": "pca.n1500.ba1.ex0.study",
+   "config_b": "pca.n500.ba1.ex0.study",
+   "level_a": "1500",
+   "level_b": "500"
+  },
+  {
+   "pair_id": 13,
+   "factor": "n_hvg",
+   "config_a": "harmony.n1500.ba1.ex0.study",
+   "config_b": "harmony.n500.ba1.ex0.study",
+   "level_a": "1500",
+   "level_b": "500"
+  },
+  {
+   "pair_id": 14,
+   "factor": "n_hvg",
+   "config_a": "combat_pca.n1500.ba1.ex0.study",
+   "config_b": "combat_pca.n500.ba1.ex0.study",
+   "level_a": "1500",
+   "level_b": "500"
+  },
+  {
+   "pair_id": 15,
+   "factor": "n_hvg",
+   "config_a": "pca.n1500.ba1.ex0.sample",
+   "config_b": "pca.n500.ba1.ex0.sample",
+   "level_a": "1500",
+   "level_b": "500"
+  },
+  {
+   "pair_id": 16,
+   "factor": "n_hvg",
+   "config_a": "harmony.n1500.ba1.ex0.sample",
+   "config_b": "harmony.n500.ba1.ex0.sample",
+   "level_a": "1500",
+   "level_b": "500"
+  },
+  {
+   "pair_id": 17,
+   "factor": "n_hvg",
+   "config_a": "combat_pca.n1500.ba1.ex0.sample",
+   "config_b": "combat_pca.n500.ba1.ex0.sample",
+   "level_a": "1500",
+   "level_b": "500"
+  },
+  {
+   "pair_id": 18,
+   "factor": "n_hvg",
+   "config_a": "pca.n1500.ba1.ex1.study",
+   "config_b": "pca.n500.ba1.ex1.study",
+   "level_a": "1500",
+   "level_b": "500"
+  },
+  {
+   "pair_id": 19,
+   "factor": "n_hvg",
+   "config_a": "harmony.n1500.ba1.ex1.study",
+   "config_b": "harmony.n500.ba1.ex1.study",
+   "level_a": "1500",
+   "level_b": "500"
+  },
+  {
+   "pair_id": 20,
+   "factor": "n_hvg",
+   "config_a": "combat_pca.n1500.ba1.ex1.study",
+   "config_b": "combat_pca.n500.ba1.ex1.study",
+   "level_a": "1500",
+   "level_b": "500"
+  },
+  {
+   "pair_id": 21,
+   "factor": "n_hvg",
+   "config_a": "pca.n1500.ba1.ex1.sample",
+   "config_b": "pca.n500.ba1.ex1.sample",
+   "level_a": "1500",
+   "level_b": "500"
+  },
+  {
+   "pair_id": 22,
+   "factor": "n_hvg",
+   "config_a": "harmony.n1500.ba1.ex1.sample",
+   "config_b": "harmony.n500.ba1.ex1.sample",
+   "level_a": "1500",
+   "level_b": "500"
+  },
+  {
+   "pair_id": 23,
+   "factor": "n_hvg",
+   "config_a": "combat_pca.n1500.ba1.ex1.sample",
+   "config_b": "combat_pca.n500.ba1.ex1.sample",
+   "level_a": "1500",
+   "level_b": "500"
+  },
+  {
+   "pair_id": 24,
+   "factor": "hvg_batch_aware",
+   "config_a": "pca.n500.ba0.ex0.study",
+   "config_b": "pca.n500.ba1.ex0.study",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 25,
+   "factor": "hvg_batch_aware",
+   "config_a": "harmony.n500.ba0.ex0.study",
+   "config_b": "harmony.n500.ba1.ex0.study",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 26,
+   "factor": "hvg_batch_aware",
+   "config_a": "combat_pca.n500.ba0.ex0.study",
+   "config_b": "combat_pca.n500.ba1.ex0.study",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 27,
+   "factor": "hvg_batch_aware",
+   "config_a": "pca.n500.ba0.ex0.sample",
+   "config_b": "pca.n500.ba1.ex0.sample",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 28,
+   "factor": "hvg_batch_aware",
+   "config_a": "harmony.n500.ba0.ex0.sample",
+   "config_b": "harmony.n500.ba1.ex0.sample",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 29,
+   "factor": "hvg_batch_aware",
+   "config_a": "combat_pca.n500.ba0.ex0.sample",
+   "config_b": "combat_pca.n500.ba1.ex0.sample",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 30,
+   "factor": "hvg_batch_aware",
+   "config_a": "pca.n500.ba0.ex1.study",
+   "config_b": "pca.n500.ba1.ex1.study",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 31,
+   "factor": "hvg_batch_aware",
+   "config_a": "harmony.n500.ba0.ex1.study",
+   "config_b": "harmony.n500.ba1.ex1.study",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 32,
+   "factor": "hvg_batch_aware",
+   "config_a": "combat_pca.n500.ba0.ex1.study",
+   "config_b": "combat_pca.n500.ba1.ex1.study",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 33,
+   "factor": "hvg_batch_aware",
+   "config_a": "pca.n500.ba0.ex1.sample",
+   "config_b": "pca.n500.ba1.ex1.sample",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 34,
+   "factor": "hvg_batch_aware",
+   "config_a": "harmony.n500.ba0.ex1.sample",
+   "config_b": "harmony.n500.ba1.ex1.sample",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 35,
+   "factor": "hvg_batch_aware",
+   "config_a": "combat_pca.n500.ba0.ex1.sample",
+   "config_b": "combat_pca.n500.ba1.ex1.sample",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 36,
+   "factor": "hvg_batch_aware",
+   "config_a": "pca.n1500.ba0.ex0.study",
+   "config_b": "pca.n1500.ba1.ex0.study",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 37,
+   "factor": "hvg_batch_aware",
+   "config_a": "harmony.n1500.ba0.ex0.study",
+   "config_b": "harmony.n1500.ba1.ex0.study",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 38,
+   "factor": "hvg_batch_aware",
+   "config_a": "combat_pca.n1500.ba0.ex0.study",
+   "config_b": "combat_pca.n1500.ba1.ex0.study",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 39,
+   "factor": "hvg_batch_aware",
+   "config_a": "pca.n1500.ba0.ex0.sample",
+   "config_b": "pca.n1500.ba1.ex0.sample",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 40,
+   "factor": "hvg_batch_aware",
+   "config_a": "harmony.n1500.ba0.ex0.sample",
+   "config_b": "harmony.n1500.ba1.ex0.sample",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 41,
+   "factor": "hvg_batch_aware",
+   "config_a": "combat_pca.n1500.ba0.ex0.sample",
+   "config_b": "combat_pca.n1500.ba1.ex0.sample",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 42,
+   "factor": "hvg_batch_aware",
+   "config_a": "pca.n1500.ba0.ex1.study",
+   "config_b": "pca.n1500.ba1.ex1.study",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 43,
+   "factor": "hvg_batch_aware",
+   "config_a": "harmony.n1500.ba0.ex1.study",
+   "config_b": "harmony.n1500.ba1.ex1.study",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 44,
+   "factor": "hvg_batch_aware",
+   "config_a": "combat_pca.n1500.ba0.ex1.study",
+   "config_b": "combat_pca.n1500.ba1.ex1.study",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 45,
+   "factor": "hvg_batch_aware",
+   "config_a": "pca.n1500.ba0.ex1.sample",
+   "config_b": "pca.n1500.ba1.ex1.sample",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 46,
+   "factor": "hvg_batch_aware",
+   "config_a": "harmony.n1500.ba0.ex1.sample",
+   "config_b": "harmony.n1500.ba1.ex1.sample",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 47,
+   "factor": "hvg_batch_aware",
+   "config_a": "combat_pca.n1500.ba0.ex1.sample",
+   "config_b": "combat_pca.n1500.ba1.ex1.sample",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 48,
+   "factor": "exclude_igx",
+   "config_a": "pca.n500.ba0.ex0.study",
+   "config_b": "pca.n500.ba0.ex1.study",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 49,
+   "factor": "exclude_igx",
+   "config_a": "harmony.n500.ba0.ex0.study",
+   "config_b": "harmony.n500.ba0.ex1.study",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 50,
+   "factor": "exclude_igx",
+   "config_a": "combat_pca.n500.ba0.ex0.study",
+   "config_b": "combat_pca.n500.ba0.ex1.study",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 51,
+   "factor": "exclude_igx",
+   "config_a": "pca.n500.ba0.ex0.sample",
+   "config_b": "pca.n500.ba0.ex1.sample",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 52,
+   "factor": "exclude_igx",
+   "config_a": "harmony.n500.ba0.ex0.sample",
+   "config_b": "harmony.n500.ba0.ex1.sample",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 53,
+   "factor": "exclude_igx",
+   "config_a": "combat_pca.n500.ba0.ex0.sample",
+   "config_b": "combat_pca.n500.ba0.ex1.sample",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 54,
+   "factor": "exclude_igx",
+   "config_a": "pca.n500.ba1.ex0.study",
+   "config_b": "pca.n500.ba1.ex1.study",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 55,
+   "factor": "exclude_igx",
+   "config_a": "harmony.n500.ba1.ex0.study",
+   "config_b": "harmony.n500.ba1.ex1.study",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 56,
+   "factor": "exclude_igx",
+   "config_a": "combat_pca.n500.ba1.ex0.study",
+   "config_b": "combat_pca.n500.ba1.ex1.study",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 57,
+   "factor": "exclude_igx",
+   "config_a": "pca.n500.ba1.ex0.sample",
+   "config_b": "pca.n500.ba1.ex1.sample",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 58,
+   "factor": "exclude_igx",
+   "config_a": "harmony.n500.ba1.ex0.sample",
+   "config_b": "harmony.n500.ba1.ex1.sample",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 59,
+   "factor": "exclude_igx",
+   "config_a": "combat_pca.n500.ba1.ex0.sample",
+   "config_b": "combat_pca.n500.ba1.ex1.sample",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 60,
+   "factor": "exclude_igx",
+   "config_a": "pca.n1500.ba0.ex0.study",
+   "config_b": "pca.n1500.ba0.ex1.study",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 61,
+   "factor": "exclude_igx",
+   "config_a": "harmony.n1500.ba0.ex0.study",
+   "config_b": "harmony.n1500.ba0.ex1.study",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 62,
+   "factor": "exclude_igx",
+   "config_a": "combat_pca.n1500.ba0.ex0.study",
+   "config_b": "combat_pca.n1500.ba0.ex1.study",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 63,
+   "factor": "exclude_igx",
+   "config_a": "pca.n1500.ba0.ex0.sample",
+   "config_b": "pca.n1500.ba0.ex1.sample",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 64,
+   "factor": "exclude_igx",
+   "config_a": "harmony.n1500.ba0.ex0.sample",
+   "config_b": "harmony.n1500.ba0.ex1.sample",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 65,
+   "factor": "exclude_igx",
+   "config_a": "combat_pca.n1500.ba0.ex0.sample",
+   "config_b": "combat_pca.n1500.ba0.ex1.sample",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 66,
+   "factor": "exclude_igx",
+   "config_a": "pca.n1500.ba1.ex0.study",
+   "config_b": "pca.n1500.ba1.ex1.study",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 67,
+   "factor": "exclude_igx",
+   "config_a": "harmony.n1500.ba1.ex0.study",
+   "config_b": "harmony.n1500.ba1.ex1.study",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 68,
+   "factor": "exclude_igx",
+   "config_a": "combat_pca.n1500.ba1.ex0.study",
+   "config_b": "combat_pca.n1500.ba1.ex1.study",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 69,
+   "factor": "exclude_igx",
+   "config_a": "pca.n1500.ba1.ex0.sample",
+   "config_b": "pca.n1500.ba1.ex1.sample",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 70,
+   "factor": "exclude_igx",
+   "config_a": "harmony.n1500.ba1.ex0.sample",
+   "config_b": "harmony.n1500.ba1.ex1.sample",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 71,
+   "factor": "exclude_igx",
+   "config_a": "combat_pca.n1500.ba1.ex0.sample",
+   "config_b": "combat_pca.n1500.ba1.ex1.sample",
+   "level_a": "False",
+   "level_b": "True"
+  },
+  {
+   "pair_id": 72,
+   "factor": "batch_key",
+   "config_a": "pca.n500.ba0.ex0.sample",
+   "config_b": "pca.n500.ba0.ex0.study",
+   "level_a": "sample",
+   "level_b": "study"
+  },
+  {
+   "pair_id": 73,
+   "factor": "batch_key",
+   "config_a": "harmony.n500.ba0.ex0.sample",
+   "config_b": "harmony.n500.ba0.ex0.study",
+   "level_a": "sample",
+   "level_b": "study"
+  },
+  {
+   "pair_id": 74,
+   "factor": "batch_key",
+   "config_a": "combat_pca.n500.ba0.ex0.sample",
+   "config_b": "combat_pca.n500.ba0.ex0.study",
+   "level_a": "sample",
+   "level_b": "study"
+  },
+  {
+   "pair_id": 75,
+   "factor": "batch_key",
+   "config_a": "pca.n500.ba0.ex1.sample",
+   "config_b": "pca.n500.ba0.ex1.study",
+   "level_a": "sample",
+   "level_b": "study"
+  },
+  {
+   "pair_id": 76,
+   "factor": "batch_key",
+   "config_a": "harmony.n500.ba0.ex1.sample",
+   "config_b": "harmony.n500.ba0.ex1.study",
+   "level_a": "sample",
+   "level_b": "study"
+  },
+  {
+   "pair_id": 77,
+   "factor": "batch_key",
+   "config_a": "combat_pca.n500.ba0.ex1.sample",
+   "config_b": "combat_pca.n500.ba0.ex1.study",
+   "level_a": "sample",
+   "level_b": "study"
+  },
+  {
+   "pair_id": 78,
+   "factor": "batch_key",
+   "config_a": "pca.n500.ba1.ex0.sample",
+   "config_b": "pca.n500.ba1.ex0.study",
+   "level_a": "sample",
+   "level_b": "study"
+  },
+  {
+   "pair_id": 79,
+   "factor": "batch_key",
+   "config_a": "harmony.n500.ba1.ex0.sample",
+   "config_b": "harmony.n500.ba1.ex0.study",
+   "level_a": "sample",
+   "level_b": "study"
+  },
+  {
+   "pair_id": 80,
+   "factor": "batch_key",
+   "config_a": "combat_pca.n500.ba1.ex0.sample",
+   "config_b": "combat_pca.n500.ba1.ex0.study",
+   "level_a": "sample",
+   "level_b": "study"
+  },
+  {
+   "pair_id": 81,
+   "factor": "batch_key",
+   "config_a": "pca.n500.ba1.ex1.sample",
+   "config_b": "pca.n500.ba1.ex1.study",
+   "level_a": "sample",
+   "level_b": "study"
+  },
+  {
+   "pair_id": 82,
+   "factor": "batch_key",
+   "config_a": "harmony.n500.ba1.ex1.sample",
+   "config_b": "harmony.n500.ba1.ex1.study",
+   "level_a": "sample",
+   "level_b": "study"
+  },
+  {
+   "pair_id": 83,
+   "factor": "batch_key",
+   "config_a": "combat_pca.n500.ba1.ex1.sample",
+   "config_b": "combat_pca.n500.ba1.ex1.study",
+   "level_a": "sample",
+   "level_b": "study"
+  },
+  {
+   "pair_id": 84,
+   "factor": "batch_key",
+   "config_a": "pca.n1500.ba0.ex0.sample",
+   "config_b": "pca.n1500.ba0.ex0.study",
+   "level_a": "sample",
+   "level_b": "study"
+  },
+  {
+   "pair_id": 85,
+   "factor": "batch_key",
+   "config_a": "harmony.n1500.ba0.ex0.sample",
+   "config_b": "harmony.n1500.ba0.ex0.study",
+   "level_a": "sample",
+   "level_b": "study"
+  },
+  {
+   "pair_id": 86,
+   "factor": "batch_key",
+   "config_a": "combat_pca.n1500.ba0.ex0.sample",
+   "config_b": "combat_pca.n1500.ba0.ex0.study",
+   "level_a": "sample",
+   "level_b": "study"
+  },
+  {
+   "pair_id": 87,
+   "factor": "batch_key",
+   "config_a": "pca.n1500.ba0.ex1.sample",
+   "config_b": "pca.n1500.ba0.ex1.study",
+   "level_a": "sample",
+   "level_b": "study"
+  },
+  {
+   "pair_id": 88,
+   "factor": "batch_key",
+   "config_a": "harmony.n1500.ba0.ex1.sample",
+   "config_b": "harmony.n1500.ba0.ex1.study",
+   "level_a": "sample",
+   "level_b": "study"
+  },
+  {
+   "pair_id": 89,
+   "factor": "batch_key",
+   "config_a": "combat_pca.n1500.ba0.ex1.sample",
+   "config_b": "combat_pca.n1500.ba0.ex1.study",
+   "level_a": "sample",
+   "level_b": "study"
+  },
+  {
+   "pair_id": 90,
+   "factor": "batch_key",
+   "config_a": "pca.n1500.ba1.ex0.sample",
+   "config_b": "pca.n1500.ba1.ex0.study",
+   "level_a": "sample",
+   "level_b": "study"
+  },
+  {
+   "pair_id": 91,
+   "factor": "batch_key",
+   "config_a": "harmony.n1500.ba1.ex0.sample",
+   "config_b": "harmony.n1500.ba1.ex0.study",
+   "level_a": "sample",
+   "level_b": "study"
+  },
+  {
+   "pair_id": 92,
+   "factor": "batch_key",
+   "config_a": "combat_pca.n1500.ba1.ex0.sample",
+   "config_b": "combat_pca.n1500.ba1.ex0.study",
+   "level_a": "sample",
+   "level_b": "study"
+  },
+  {
+   "pair_id": 93,
+   "factor": "batch_key",
+   "config_a": "pca.n1500.ba1.ex1.sample",
+   "config_b": "pca.n1500.ba1.ex1.study",
+   "level_a": "sample",
+   "level_b": "study"
+  },
+  {
+   "pair_id": 94,
+   "factor": "batch_key",
+   "config_a": "harmony.n1500.ba1.ex1.sample",
+   "config_b": "harmony.n1500.ba1.ex1.study",
+   "level_a": "sample",
+   "level_b": "study"
+  },
+  {
+   "pair_id": 95,
+   "factor": "batch_key",
+   "config_a": "combat_pca.n1500.ba1.ex1.sample",
+   "config_b": "combat_pca.n1500.ba1.ex1.study",
+   "level_a": "sample",
+   "level_b": "study"
+  },
+  {
+   "pair_id": 96,
+   "factor": "method",
+   "config_a": "combat_pca.n500.ba0.ex0.study",
+   "config_b": "harmony.n500.ba0.ex0.study",
+   "level_a": "combat_pca",
+   "level_b": "harmony"
+  },
+  {
+   "pair_id": 97,
+   "factor": "method",
+   "config_a": "combat_pca.n500.ba0.ex0.study",
+   "config_b": "pca.n500.ba0.ex0.study",
+   "level_a": "combat_pca",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 98,
+   "factor": "method",
+   "config_a": "harmony.n500.ba0.ex0.study",
+   "config_b": "pca.n500.ba0.ex0.study",
+   "level_a": "harmony",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 99,
+   "factor": "method",
+   "config_a": "combat_pca.n500.ba0.ex0.sample",
+   "config_b": "harmony.n500.ba0.ex0.sample",
+   "level_a": "combat_pca",
+   "level_b": "harmony"
+  },
+  {
+   "pair_id": 100,
+   "factor": "method",
+   "config_a": "combat_pca.n500.ba0.ex0.sample",
+   "config_b": "pca.n500.ba0.ex0.sample",
+   "level_a": "combat_pca",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 101,
+   "factor": "method",
+   "config_a": "harmony.n500.ba0.ex0.sample",
+   "config_b": "pca.n500.ba0.ex0.sample",
+   "level_a": "harmony",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 102,
+   "factor": "method",
+   "config_a": "combat_pca.n500.ba0.ex1.study",
+   "config_b": "harmony.n500.ba0.ex1.study",
+   "level_a": "combat_pca",
+   "level_b": "harmony"
+  },
+  {
+   "pair_id": 103,
+   "factor": "method",
+   "config_a": "combat_pca.n500.ba0.ex1.study",
+   "config_b": "pca.n500.ba0.ex1.study",
+   "level_a": "combat_pca",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 104,
+   "factor": "method",
+   "config_a": "harmony.n500.ba0.ex1.study",
+   "config_b": "pca.n500.ba0.ex1.study",
+   "level_a": "harmony",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 105,
+   "factor": "method",
+   "config_a": "combat_pca.n500.ba0.ex1.sample",
+   "config_b": "harmony.n500.ba0.ex1.sample",
+   "level_a": "combat_pca",
+   "level_b": "harmony"
+  },
+  {
+   "pair_id": 106,
+   "factor": "method",
+   "config_a": "combat_pca.n500.ba0.ex1.sample",
+   "config_b": "pca.n500.ba0.ex1.sample",
+   "level_a": "combat_pca",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 107,
+   "factor": "method",
+   "config_a": "harmony.n500.ba0.ex1.sample",
+   "config_b": "pca.n500.ba0.ex1.sample",
+   "level_a": "harmony",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 108,
+   "factor": "method",
+   "config_a": "combat_pca.n500.ba1.ex0.study",
+   "config_b": "harmony.n500.ba1.ex0.study",
+   "level_a": "combat_pca",
+   "level_b": "harmony"
+  },
+  {
+   "pair_id": 109,
+   "factor": "method",
+   "config_a": "combat_pca.n500.ba1.ex0.study",
+   "config_b": "pca.n500.ba1.ex0.study",
+   "level_a": "combat_pca",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 110,
+   "factor": "method",
+   "config_a": "harmony.n500.ba1.ex0.study",
+   "config_b": "pca.n500.ba1.ex0.study",
+   "level_a": "harmony",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 111,
+   "factor": "method",
+   "config_a": "combat_pca.n500.ba1.ex0.sample",
+   "config_b": "harmony.n500.ba1.ex0.sample",
+   "level_a": "combat_pca",
+   "level_b": "harmony"
+  },
+  {
+   "pair_id": 112,
+   "factor": "method",
+   "config_a": "combat_pca.n500.ba1.ex0.sample",
+   "config_b": "pca.n500.ba1.ex0.sample",
+   "level_a": "combat_pca",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 113,
+   "factor": "method",
+   "config_a": "harmony.n500.ba1.ex0.sample",
+   "config_b": "pca.n500.ba1.ex0.sample",
+   "level_a": "harmony",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 114,
+   "factor": "method",
+   "config_a": "combat_pca.n500.ba1.ex1.study",
+   "config_b": "harmony.n500.ba1.ex1.study",
+   "level_a": "combat_pca",
+   "level_b": "harmony"
+  },
+  {
+   "pair_id": 115,
+   "factor": "method",
+   "config_a": "combat_pca.n500.ba1.ex1.study",
+   "config_b": "pca.n500.ba1.ex1.study",
+   "level_a": "combat_pca",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 116,
+   "factor": "method",
+   "config_a": "harmony.n500.ba1.ex1.study",
+   "config_b": "pca.n500.ba1.ex1.study",
+   "level_a": "harmony",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 117,
+   "factor": "method",
+   "config_a": "combat_pca.n500.ba1.ex1.sample",
+   "config_b": "harmony.n500.ba1.ex1.sample",
+   "level_a": "combat_pca",
+   "level_b": "harmony"
+  },
+  {
+   "pair_id": 118,
+   "factor": "method",
+   "config_a": "combat_pca.n500.ba1.ex1.sample",
+   "config_b": "pca.n500.ba1.ex1.sample",
+   "level_a": "combat_pca",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 119,
+   "factor": "method",
+   "config_a": "harmony.n500.ba1.ex1.sample",
+   "config_b": "pca.n500.ba1.ex1.sample",
+   "level_a": "harmony",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 120,
+   "factor": "method",
+   "config_a": "combat_pca.n1500.ba0.ex0.study",
+   "config_b": "harmony.n1500.ba0.ex0.study",
+   "level_a": "combat_pca",
+   "level_b": "harmony"
+  },
+  {
+   "pair_id": 121,
+   "factor": "method",
+   "config_a": "combat_pca.n1500.ba0.ex0.study",
+   "config_b": "pca.n1500.ba0.ex0.study",
+   "level_a": "combat_pca",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 122,
+   "factor": "method",
+   "config_a": "harmony.n1500.ba0.ex0.study",
+   "config_b": "pca.n1500.ba0.ex0.study",
+   "level_a": "harmony",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 123,
+   "factor": "method",
+   "config_a": "combat_pca.n1500.ba0.ex0.sample",
+   "config_b": "harmony.n1500.ba0.ex0.sample",
+   "level_a": "combat_pca",
+   "level_b": "harmony"
+  },
+  {
+   "pair_id": 124,
+   "factor": "method",
+   "config_a": "combat_pca.n1500.ba0.ex0.sample",
+   "config_b": "pca.n1500.ba0.ex0.sample",
+   "level_a": "combat_pca",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 125,
+   "factor": "method",
+   "config_a": "harmony.n1500.ba0.ex0.sample",
+   "config_b": "pca.n1500.ba0.ex0.sample",
+   "level_a": "harmony",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 126,
+   "factor": "method",
+   "config_a": "combat_pca.n1500.ba0.ex1.study",
+   "config_b": "harmony.n1500.ba0.ex1.study",
+   "level_a": "combat_pca",
+   "level_b": "harmony"
+  },
+  {
+   "pair_id": 127,
+   "factor": "method",
+   "config_a": "combat_pca.n1500.ba0.ex1.study",
+   "config_b": "pca.n1500.ba0.ex1.study",
+   "level_a": "combat_pca",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 128,
+   "factor": "method",
+   "config_a": "harmony.n1500.ba0.ex1.study",
+   "config_b": "pca.n1500.ba0.ex1.study",
+   "level_a": "harmony",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 129,
+   "factor": "method",
+   "config_a": "combat_pca.n1500.ba0.ex1.sample",
+   "config_b": "harmony.n1500.ba0.ex1.sample",
+   "level_a": "combat_pca",
+   "level_b": "harmony"
+  },
+  {
+   "pair_id": 130,
+   "factor": "method",
+   "config_a": "combat_pca.n1500.ba0.ex1.sample",
+   "config_b": "pca.n1500.ba0.ex1.sample",
+   "level_a": "combat_pca",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 131,
+   "factor": "method",
+   "config_a": "harmony.n1500.ba0.ex1.sample",
+   "config_b": "pca.n1500.ba0.ex1.sample",
+   "level_a": "harmony",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 132,
+   "factor": "method",
+   "config_a": "combat_pca.n1500.ba1.ex0.study",
+   "config_b": "harmony.n1500.ba1.ex0.study",
+   "level_a": "combat_pca",
+   "level_b": "harmony"
+  },
+  {
+   "pair_id": 133,
+   "factor": "method",
+   "config_a": "combat_pca.n1500.ba1.ex0.study",
+   "config_b": "pca.n1500.ba1.ex0.study",
+   "level_a": "combat_pca",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 134,
+   "factor": "method",
+   "config_a": "harmony.n1500.ba1.ex0.study",
+   "config_b": "pca.n1500.ba1.ex0.study",
+   "level_a": "harmony",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 135,
+   "factor": "method",
+   "config_a": "combat_pca.n1500.ba1.ex0.sample",
+   "config_b": "harmony.n1500.ba1.ex0.sample",
+   "level_a": "combat_pca",
+   "level_b": "harmony"
+  },
+  {
+   "pair_id": 136,
+   "factor": "method",
+   "config_a": "combat_pca.n1500.ba1.ex0.sample",
+   "config_b": "pca.n1500.ba1.ex0.sample",
+   "level_a": "combat_pca",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 137,
+   "factor": "method",
+   "config_a": "harmony.n1500.ba1.ex0.sample",
+   "config_b": "pca.n1500.ba1.ex0.sample",
+   "level_a": "harmony",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 138,
+   "factor": "method",
+   "config_a": "combat_pca.n1500.ba1.ex1.study",
+   "config_b": "harmony.n1500.ba1.ex1.study",
+   "level_a": "combat_pca",
+   "level_b": "harmony"
+  },
+  {
+   "pair_id": 139,
+   "factor": "method",
+   "config_a": "combat_pca.n1500.ba1.ex1.study",
+   "config_b": "pca.n1500.ba1.ex1.study",
+   "level_a": "combat_pca",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 140,
+   "factor": "method",
+   "config_a": "harmony.n1500.ba1.ex1.study",
+   "config_b": "pca.n1500.ba1.ex1.study",
+   "level_a": "harmony",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 141,
+   "factor": "method",
+   "config_a": "combat_pca.n1500.ba1.ex1.sample",
+   "config_b": "harmony.n1500.ba1.ex1.sample",
+   "level_a": "combat_pca",
+   "level_b": "harmony"
+  },
+  {
+   "pair_id": 142,
+   "factor": "method",
+   "config_a": "combat_pca.n1500.ba1.ex1.sample",
+   "config_b": "pca.n1500.ba1.ex1.sample",
+   "level_a": "combat_pca",
+   "level_b": "pca"
+  },
+  {
+   "pair_id": 143,
+   "factor": "method",
+   "config_a": "harmony.n1500.ba1.ex1.sample",
+   "config_b": "pca.n1500.ba1.ex1.sample",
+   "level_a": "harmony",
+   "level_b": "pca"
+  }
+ ],
+ "cell_measures": [
+  {
+   "index": 0,
+   "name": "stability_all",
+   "description": "consensus stability over all models"
+  },
+  {
+   "index": 1,
+   "name": "stability_seed",
+   "description": "consensus stability over seed replicates only (mean over configurations)"
+  },
+  {
+   "index": 2,
+   "name": "majority_vote_disagreement",
+   "description": "paper-style baseline"
+  },
+  {
+   "index": 3,
+   "name": "paper_graph_dissimilarity",
+   "description": "paper-style baseline (mean |d| over matched pairs)"
+  },
+  {
+   "index": 4,
+   "name": "E.jaccard.n_hvg",
+   "description": "effect E(c,n_hvg), measure jaccard"
+  },
+  {
+   "index": 5,
+   "name": "H.jaccard.n_hvg",
+   "description": "interaction H(c,n_hvg), measure jaccard"
+  },
+  {
+   "index": 6,
+   "name": "Erank.jaccard.n_hvg",
+   "description": "rank-based effect, measure jaccard"
+  },
+  {
+   "index": 7,
+   "name": "E.jaccard.hvg_batch_aware",
+   "description": "effect E(c,hvg_batch_aware), measure jaccard"
+  },
+  {
+   "index": 8,
+   "name": "H.jaccard.hvg_batch_aware",
+   "description": "interaction H(c,hvg_batch_aware), measure jaccard"
+  },
+  {
+   "index": 9,
+   "name": "Erank.jaccard.hvg_batch_aware",
+   "description": "rank-based effect, measure jaccard"
+  },
+  {
+   "index": 10,
+   "name": "E.jaccard.exclude_igx",
+   "description": "effect E(c,exclude_igx), measure jaccard"
+  },
+  {
+   "index": 11,
+   "name": "H.jaccard.exclude_igx",
+   "description": "interaction H(c,exclude_igx), measure jaccard"
+  },
+  {
+   "index": 12,
+   "name": "Erank.jaccard.exclude_igx",
+   "description": "rank-based effect, measure jaccard"
+  },
+  {
+   "index": 13,
+   "name": "E.jaccard.batch_key",
+   "description": "effect E(c,batch_key), measure jaccard"
+  },
+  {
+   "index": 14,
+   "name": "H.jaccard.batch_key",
+   "description": "interaction H(c,batch_key), measure jaccard"
+  },
+  {
+   "index": 15,
+   "name": "Erank.jaccard.batch_key",
+   "description": "rank-based effect, measure jaccard"
+  },
+  {
+   "index": 16,
+   "name": "E.jaccard.method",
+   "description": "effect E(c,method), measure jaccard"
+  },
+  {
+   "index": 17,
+   "name": "H.jaccard.method",
+   "description": "interaction H(c,method), measure jaccard"
+  },
+  {
+   "index": 18,
+   "name": "Erank.jaccard.method",
+   "description": "rank-based effect, measure jaccard"
+  },
+  {
+   "index": 19,
+   "name": "E.jaccard.seed",
+   "description": "effect E(c,seed), measure jaccard"
+  },
+  {
+   "index": 20,
+   "name": "H.jaccard.seed",
+   "description": "interaction H(c,seed), measure jaccard"
+  },
+  {
+   "index": 21,
+   "name": "Erank.jaccard.seed",
+   "description": "rank-based effect, measure jaccard"
+  },
+  {
+   "index": 22,
+   "name": "region.jaccard",
+   "description": "region id (measure jaccard)"
+  },
+  {
+   "index": 23,
+   "name": "E.composition.n_hvg",
+   "description": "effect E(c,n_hvg), measure composition"
+  },
+  {
+   "index": 24,
+   "name": "H.composition.n_hvg",
+   "description": "interaction H(c,n_hvg), measure composition"
+  },
+  {
+   "index": 25,
+   "name": "Erank.composition.n_hvg",
+   "description": "rank-based effect, measure composition"
+  },
+  {
+   "index": 26,
+   "name": "E.composition.hvg_batch_aware",
+   "description": "effect E(c,hvg_batch_aware), measure composition"
+  },
+  {
+   "index": 27,
+   "name": "H.composition.hvg_batch_aware",
+   "description": "interaction H(c,hvg_batch_aware), measure composition"
+  },
+  {
+   "index": 28,
+   "name": "Erank.composition.hvg_batch_aware",
+   "description": "rank-based effect, measure composition"
+  },
+  {
+   "index": 29,
+   "name": "E.composition.exclude_igx",
+   "description": "effect E(c,exclude_igx), measure composition"
+  },
+  {
+   "index": 30,
+   "name": "H.composition.exclude_igx",
+   "description": "interaction H(c,exclude_igx), measure composition"
+  },
+  {
+   "index": 31,
+   "name": "Erank.composition.exclude_igx",
+   "description": "rank-based effect, measure composition"
+  },
+  {
+   "index": 32,
+   "name": "E.composition.batch_key",
+   "description": "effect E(c,batch_key), measure composition"
+  },
+  {
+   "index": 33,
+   "name": "H.composition.batch_key",
+   "description": "interaction H(c,batch_key), measure composition"
+  },
+  {
+   "index": 34,
+   "name": "Erank.composition.batch_key",
+   "description": "rank-based effect, measure composition"
+  },
+  {
+   "index": 35,
+   "name": "E.composition.method",
+   "description": "effect E(c,method), measure composition"
+  },
+  {
+   "index": 36,
+   "name": "H.composition.method",
+   "description": "interaction H(c,method), measure composition"
+  },
+  {
+   "index": 37,
+   "name": "Erank.composition.method",
+   "description": "rank-based effect, measure composition"
+  },
+  {
+   "index": 38,
+   "name": "E.composition.seed",
+   "description": "effect E(c,seed), measure composition"
+  },
+  {
+   "index": 39,
+   "name": "H.composition.seed",
+   "description": "interaction H(c,seed), measure composition"
+  },
+  {
+   "index": 40,
+   "name": "Erank.composition.seed",
+   "description": "rank-based effect, measure composition"
+  },
+  {
+   "index": 41,
+   "name": "region.composition",
+   "description": "region id (measure composition)"
+  }
+ ],
+ "files": {
+  "models.json": {
+   "dtype": "json",
+   "description": "Per-model factor levels, metrics (raw/scaled), aggregates, seed-replicate sd, 2D model-map coordinates per measure mode, summary measures. Order = manifest.model_order.",
+   "bytes": 361673
+  },
+  "agreement.bin": {
+   "dtype": "float32",
+   "shape": [
+    144,
+    144
+   ],
+   "description": "A(a,b) = mean \u0394 over a stratified sample of 1999 cells (measure: jaccard)",
+   "order": "[model_a, model_b], model order = manifest.model_order",
+   "bytes": 82944
+  },
+  "agreement_composition.bin": {
+   "dtype": "float32",
+   "shape": [
+    144,
+    144
+   ],
+   "description": "A(a,b) = mean \u0394 over a stratified sample of 1999 cells (measure: composition)",
+   "order": "[model_a, model_b], model order = manifest.model_order",
+   "bytes": 82944
+  },
+  "cells.json": {
+   "dtype": "json",
+   "description": "Per cell: id, fixed-map x/y (UMAP of the consensus kNN graph; location only), dictionary-encoded obs columns, numeric QC columns, planted-effect membership.",
+   "bytes": 334411
+  },
+  "cell_measures.bin": {
+   "dtype": "float32",
+   "shape": [
+    42,
+    5000
+   ],
+   "description": "per-cell measure arrays; array names in manifest.cell_measures",
+   "order": "[array, cell]",
+   "bytes": 840000
+  },
+  "pair_delta.bin": {
+   "dtype": "float32",
+   "shape": [
+    5000,
+    144
+   ],
+   "description": "seed-averaged \u0394\u0304 per cell and matched one-factor pair (measure jaccard)",
+   "order": "[cell, pair], pair order = manifest.pairs",
+   "bytes": 2880000
+  },
+  "pair_delta_composition.bin": {
+   "dtype": "float32",
+   "shape": [
+    5000,
+    144
+   ],
+   "description": "seed-averaged \u0394\u0304 per cell and matched one-factor pair (measure composition)",
+   "order": "[cell, pair], pair order = manifest.pairs",
+   "bytes": 2880000
+  },
+  "z_vs_ref.bin": {
+   "dtype": "float32",
+   "shape": [
+    3,
+    5000,
+    144
+   ],
+   "description": "calibrated change z(c, ref, model), measure jaccard",
+   "order": "[reference, cell, model], reference order = manifest.references",
+   "bytes": 8640000
+  },
+  "z_vs_ref_composition.bin": {
+   "dtype": "float32",
+   "shape": [
+    1,
+    5000,
+    144
+   ],
+   "description": "calibrated change z(c, ref, model) for the first reference only, measure composition",
+   "order": "[reference, cell, model]",
+   "bytes": 2880000
+  },
+  "regions.json": {
+   "dtype": "json",
+   "description": "Per measure mode: regions with size, compositions, QC summaries, top genes, mean E/H, and the local variant of every model (arrays in manifest.model_order).",
+   "bytes": 106441
+  },
+  "neighbors_sample.bin": {
+   "dtype": "uint32",
+   "shape": [
+    3,
+    5000,
+    15
+   ],
+   "description": "k=15 nearest-neighbour indices for the models in manifest.neighbor_models",
+   "order": "[model, cell, neighbour]",
+   "bytes": 900000
+  }
+ }
+}

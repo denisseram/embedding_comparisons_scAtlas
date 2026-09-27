@@ -7,7 +7,7 @@ __pycache__/
 # in integration/public/multiverse-data/ IS committed.
 multiverse-pipeline/outputs/
 multiverse-pipeline/data/*.h5ad
-multiverse-pipeline/data/ground_truth.csv
-multiverse-pipeline/data/gene_sets.json
+multiverse-pipeline/data/*ground_truth.csv
+multiverse-pipeline/data/*gene_sets.json
 
 .DS_Store

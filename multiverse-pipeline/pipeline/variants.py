@@ -46,12 +46,15 @@ def local_structure(nbrs: np.ndarray, members: np.ndarray, regions: np.ndarray, 
     return max(n_sub, 1), outside_frac, joined_to
 
 
-def main(cfg: dict | None = None) -> pd.DataFrame:
+def main(cfg: dict | None = None, mode: str | None = None) -> pd.DataFrame:
     cfg = cfg or load_config()
+    modes = cfg["measures"].get("modes", ["jaccard"])
+    mode = mode or modes[0]
+    sfx = "" if mode == modes[0] else f"_{mode}"
     t0 = time.perf_counter()
     vc, k = cfg["variants"], cfg["measures"]["k"]
     od = out_dir(cfg, "measures")
-    regions = np.load(od / "regions.npy")
+    regions = np.load(od / f"regions{sfx}.npy")
     models = pd.read_csv(out_dir(cfg) / "models.csv")
     knn = load_knn(cfg)
     rows = []
@@ -63,17 +66,18 @@ def main(cfg: dict | None = None) -> pd.DataFrame:
                                                vc["min_subcluster_frac"], cfg["global_seed"])
             rows.append({"model_id": mid, "region": r, "n_sub": n_sub, "outside_frac": out_f, "joined_to": jt})
     df = pd.DataFrame(rows)
-    mode = df.groupby("region").n_sub.agg(lambda x: x.mode().min())
-    df["modal_n_sub"] = df.region.map(mode)
+    modal = df.groupby("region").n_sub.agg(lambda x: x.mode().min())
+    df["modal_n_sub"] = df.region.map(modal)
     df["variant"] = np.select(
         [df.outside_frac >= vc["joined_min_outside"], df.n_sub > df.modal_n_sub, df.n_sub < df.modal_n_sub],
         ["joined", "split", "merged"], "typical")
-    df.to_csv(od / "variants.csv", index=False)
+    df.to_csv(od / f"variants{sfx}.csv", index=False)
     summary = df.groupby("region").variant.value_counts().unstack(fill_value=0)
     log.info("variant counts per region:\n" + summary.to_string())
-    append_runtime(cfg, "variants", time.perf_counter() - t0)
+    append_runtime(cfg, f"variants_{mode}", time.perf_counter() - t0)
     return df
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    main(mode=sys.argv[1] if len(sys.argv) > 1 else None)
