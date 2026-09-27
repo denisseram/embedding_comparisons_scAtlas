@@ -1,0 +1,9 @@
+---
+import Layout from '../layouts/Layout.astro';
+import MultiverseApp from '../components/multiverse/MultiverseApp';
+---
+
+<Layout title="Embedding Multiverse Explorer">
+	<MultiverseApp client:only="react" />
+	<noscript>This dashboard runs entirely in the browser and needs JavaScript.</noscript>
+</Layout>
