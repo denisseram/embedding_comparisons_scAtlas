@@ -1,0 +1,94 @@
+# Embedding Multiverse Explorer — single source of configuration.
+# Every decision, seed, k, weight and path used by the pipeline lives here.
+
+name: toy
+global_seed: 20260927          # used for everything that is NOT an explicit seed replicate
+
+paths:
+  data: data/toy.h5ad
+  ground_truth: data/ground_truth.csv
+  gene_sets: data/gene_sets.json
+  outputs: outputs/toy          # heavy intermediates (gitignored)
+  export_dir: ../integration/public/multiverse-data
+
+simulate:
+  n_cells: 5000
+  n_genes: 2000
+  studies: {A: [s1, s2, s3], B: [s4, s5, s6]}
+  tissue2_samples: [s5, s6]     # P2: tissue 2 comes only from study B
+  mean_library_size: 3000
+  nb_dispersion: 0.3            # Poisson-gamma: var = mu + phi * mu^2
+  batch_strength:
+    study_log_sd: 0.35          # multiplicative gene-wise study effect (log scale)
+    sample_log_sd: 0.20         # multiplicative gene-wise sample effect (log scale)
+  n_markers_per_type: 40
+  marker_log_fc: 2.0
+  n_secondary_markers: 360      # moderate structure so weak P1 markers are not top HVGs
+  secondary_log_fc: 1.0
+  p1_n_weak_markers: 15
+  p1_log_fc: 1.2               # calibrated: excluded at 500 HVGs, separates at 1500 (see README)
+  p2_n_state_genes: 30
+  p2_log_fc: 1.5
+  p3_fraction: 0.03
+  p3_main_sample: s2
+  p3_main_sample_share: 0.8
+  p4_fraction: 0.04
+  p5_n_igx: 30
+  p5_cell_type: B
+  n_ifn_genes: 40
+  n_mito_genes: 13
+
+decisions:
+  n_hvg: [500, 1500]
+  hvg_batch_aware: [false, true]
+  exclude_igx: [false, true]
+  batch_key: [study, sample]
+  method: [pca, harmony, combat_pca]
+  seeds: [0, 1, 2]
+
+integration:
+  n_pcs: 30
+  pca_fit_fraction: 0.9         # seed replicate = different 90% subsample used to FIT the PCA
+  use_scvi: false               # optional; falls back (skips) if scvi-tools is not importable
+  scvi_epochs: 50
+
+knn:
+  k_small: 15
+  k_large: 50
+  backend: pynndescent          # pynndescent | exact
+
+metrics:
+  weights: {batch: 0.4, bio: 0.6}
+  leiden_resolutions: [0.2, 0.4, 0.6, 0.8, 1.0]
+  label_key: cell_type
+  eval_batch_key: sample        # batch metrics are always evaluated against this key (comparability)
+  covariates: [log_total_counts, pct_mito, doublet_score]
+  kbet_alpha: 0.05
+  use_scib_metrics: false       # optional BRAS; falls back (skips) if not importable
+  graph_dissim_quantile: 0.9
+
+measures:
+  k: 15                         # switchable: 15 or 50
+  sigma_eps: 0.05
+  consensus_threshold: 0.8
+  agreement_n_cells: 2000
+
+regions:
+  min_regions: 8
+  max_regions: 20
+  min_region_size: 25
+  resolutions: [0.1, 0.2, 0.3, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0]
+  n_top_genes: 10
+
+variants:
+  sub_resolution: 0.5
+  min_subcluster_frac: 0.1
+  joined_min_outside: 0.5
+
+layouts:
+  model_umap_n_neighbors: 10
+
+export:
+  n_reference_models: 3         # top-overall + best-bio + best-batch (deduplicated)
+  n_neighbor_models: 3
+  budget_mb: 25
