@@ -1,0 +1,12 @@
+{
+  "name": "multiverse-browser-checks",
+  "private": true,
+  "type": "module",
+  "description": "Playwright checks for the /multiverse dashboard (kept out of the Astro site's dependencies)",
+  "scripts": {
+    "check": "node check.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}

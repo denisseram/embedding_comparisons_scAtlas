@@ -56,7 +56,7 @@ def merge_small(labels: np.ndarray, cons: np.ndarray, min_size: int) -> np.ndarr
 def find_regions(cons: np.ndarray, E: np.ndarray, rc: dict, seed: int) -> tuple[np.ndarray, float]:
     prof = (E - E.mean(0)) / (E.std(0) + 1e-9)
     g = weighted_graph(cons, prof)
-    fallback = None
+    best = None  # closest to the target range if no resolution lands inside it
     for res in rc["resolutions"]:
         part = leidenalg.find_partition(g, leidenalg.RBConfigurationVertexPartition, weights="weight",
                                         resolution_parameter=res, seed=seed)
@@ -64,9 +64,10 @@ def find_regions(cons: np.ndarray, E: np.ndarray, rc: dict, seed: int) -> tuple[
         n = lab.max() + 1
         if rc["min_regions"] <= n <= rc["max_regions"]:
             return lab, res
-        if n < rc["min_regions"]:
-            fallback = (lab, res)
-    return fallback if fallback else (lab, res)
+        gap = rc["min_regions"] - n if n < rc["min_regions"] else n - rc["max_regions"]
+        if best is None or gap < best[0]:
+            best = (gap, lab, res)
+    return best[1], best[2]
 
 
 def region_table(adata: ad.AnnData, labels: np.ndarray, E: np.ndarray, H: np.ndarray,

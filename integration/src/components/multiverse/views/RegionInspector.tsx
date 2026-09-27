@@ -6,6 +6,7 @@ import { useData } from '../data/DataContext';
 import { useSelection } from '../state';
 import { INK, categorical, fmt, useTheme } from '../d3/colors';
 import { cellArray } from '../data/loader';
+import { regionCells } from '../compute/selection';
 
 const COMP_COLS = ['cell_type', 'sample', 'study', 'tissue', 'planted_effect'];
 const QC_COLS: [string, boolean][] = [
@@ -18,7 +19,7 @@ export default function RegionInspector() {
   const { entry, cells } = useData();
   const cd = cells!;
   const { manifest } = entry;
-  const { state } = useSelection();
+  const { state, dispatch } = useSelection();
   const theme = useTheme();
   const N = manifest.dataset.n_cells;
   const sel = state.selectedCells;
@@ -31,11 +32,38 @@ export default function RegionInspector() {
   const [nbA, setNbA] = useState(manifest.neighbor_models[0]);
   const [nbB, setNbB] = useState(manifest.neighbor_models[1] ?? manifest.neighbor_models[0]);
 
+  // keyboard-reachable region picker (V4/V5 rows are pointer targets)
+  const picker = (
+    <label className="mv-small">
+      Region{' '}
+      <select
+        value={state.selectedRegion ?? ''}
+        onChange={(e) => {
+          const r = e.target.value === '' ? null : Number(e.target.value);
+          dispatch(r === null ? { type: 'selectRegion', region: null } : { type: 'selectRegion', region: r, cells: regionCells(cd, manifest, state.mode, r) });
+        }}
+      >
+        <option value="">(none)</option>
+        {cd.regions.by_mode[state.mode].regions.map((r) => (
+          <option key={r.region} value={r.region}>
+            {r.label} · n={r.size}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+
   if (!sel)
-    return <p className="mv-muted">Select a region (V4, V5) or lasso cells (V1, V2) to inspect their composition, QC, genes and neighbour provenance.</p>;
+    return (
+      <div>
+        {picker}
+        <p className="mv-muted">Select a region (here, V4 or V5) or lasso cells (V1) to inspect their composition, QC, genes and neighbour provenance.</p>
+      </div>
+    );
 
   return (
     <div>
+      {picker}
       <p className="mv-small">
         <strong>{region ? region.label : 'Lasso selection'}</strong> · {sel.length.toLocaleString()} cells vs {(N - sel.length).toLocaleString()} others.
         {region && ` Consensus stability ${fmt(region.stability_all)} (all models) / ${fmt(region.stability_seed)} (seed only); QC deviation ${fmt(region.qc_deviation, 2)}.`}

@@ -1,0 +1,190 @@
+PASS  renders v0a
+PASS  renders v0b
+PASS  renders v3
+PASS  V0a draws 144 models  — 144
+PASS  V3 canvas drawn
+PASS  dropdown recolours V0a
+PASS  dropdown updates V0b  — 32 ms
+PASS  timing: recolour (select → leaderboard updated)  — 32 ms
+PASS  categorical colour + legend  — 18 ms
+PASS  frac |z|>2 colour loads z and recolours
+PASS  funky heatmap renders
+PASS  leaderboard click selects model  — 86 ms
+PASS  V0a highlights selected model
+PASS  timing: model lasso  — 28 ms
+PASS  V0a lasso selects models  — 108 models · all cells (28 ms mouse-up → selection rendered)
+PASS  reset clears selection
+PASS  V3 click selects two models
+PASS  renders v1
+PASS  renders v2
+PASS  renders v4
+PASS  renders v5
+PASS  renders v6
+PASS  renders v7
+PASS  timing: cell map recolour  — 30 ms
+PASS  cell map hover tooltip
+PASS  timing: cell lasso (incl. V6/V0a/V7 recompute)  — 39 ms
+PASS  V1 lasso selects cells  — 0 models · 1,950 cells (39 ms mouse-up → selection + linked views rendered)
+PASS  V6 edges recoloured for cell selection
+PASS  V7 inspector shows selection
+PASS  V4 row click selects region  — 0 models · 147 cells · region R10
+PASS  V7 shows top genes for region
+PASS  V6 node click selects models and filters V5  — 1872 → 39 cells
+PASS  measure mode switch shows exploratory banner
+PASS  V8 JSON download  — decision-pca.n500.ba0.ex0.study.s0.json
+PASS  V8 Markdown download
+PASS  no console errors
+
+chrome/light: 36/36 passed
+PASS  renders v0a
+PASS  renders v0b
+PASS  renders v3
+PASS  V0a draws 144 models  — 144
+PASS  V3 canvas drawn
+PASS  dropdown recolours V0a
+PASS  dropdown updates V0b  — 47 ms
+PASS  timing: recolour (select → leaderboard updated)  — 47 ms
+PASS  categorical colour + legend  — 35 ms
+PASS  frac |z|>2 colour loads z and recolours
+PASS  funky heatmap renders
+PASS  leaderboard click selects model  — 88 ms
+PASS  V0a highlights selected model
+PASS  timing: model lasso  — 40 ms
+PASS  V0a lasso selects models  — 108 models · all cells (40 ms mouse-up → selection rendered)
+PASS  reset clears selection
+PASS  V3 click selects two models
+PASS  renders v1
+PASS  renders v2
+PASS  renders v4
+PASS  renders v5
+PASS  renders v6
+PASS  renders v7
+PASS  timing: cell map recolour  — 28 ms
+PASS  cell map hover tooltip
+PASS  timing: cell lasso (incl. V6/V0a/V7 recompute)  — 41 ms
+PASS  V1 lasso selects cells  — 0 models · 1,950 cells (41 ms mouse-up → selection + linked views rendered)
+PASS  V6 edges recoloured for cell selection
+PASS  V7 inspector shows selection
+PASS  V4 row click selects region  — 0 models · 147 cells · region R10
+PASS  V7 shows top genes for region
+PASS  V6 node click selects models and filters V5  — 1872 → 39 cells
+PASS  measure mode switch shows exploratory banner
+PASS  V8 JSON download  — decision-pca.n500.ba0.ex0.study.s0.json
+PASS  V8 Markdown download
+PASS  no console errors
+
+firefox/light: 36/36 passed
+PASS  renders v0a
+PASS  renders v0b
+PASS  renders v3
+PASS  V0a draws 144 models  — 144
+PASS  V3 canvas drawn
+PASS  dropdown recolours V0a
+PASS  dropdown updates V0b  — 22 ms
+PASS  timing: recolour (select → leaderboard updated)  — 22 ms
+PASS  categorical colour + legend  — 14 ms
+PASS  frac |z|>2 colour loads z and recolours
+PASS  funky heatmap renders
+PASS  leaderboard click selects model  — 74 ms
+PASS  V0a highlights selected model
+PASS  timing: model lasso  — 40 ms
+PASS  V0a lasso selects models  — 108 models · all cells (40 ms mouse-up → selection rendered)
+PASS  reset clears selection
+PASS  V3 click selects two models
+PASS  renders v1
+PASS  renders v2
+PASS  renders v4
+PASS  renders v5
+PASS  renders v6
+PASS  renders v7
+PASS  timing: cell map recolour  — 17 ms
+PASS  cell map hover tooltip
+PASS  timing: cell lasso (incl. V6/V0a/V7 recompute)  — 34 ms
+PASS  V1 lasso selects cells  — 0 models · 1,950 cells (34 ms mouse-up → selection + linked views rendered)
+PASS  V6 edges recoloured for cell selection
+PASS  V7 inspector shows selection
+PASS  V4 row click selects region  — 0 models · 147 cells · region R10
+PASS  V7 shows top genes for region
+PASS  V6 node click selects models and filters V5  — 1872 → 39 cells
+PASS  measure mode switch shows exploratory banner
+PASS  V8 JSON download  — decision-pca.n500.ba0.ex0.study.s0.json
+PASS  V8 Markdown download
+PASS  no console errors
+
+webkit/light: 36/36 passed
+PASS  renders v0a
+PASS  renders v0b
+PASS  renders v3
+PASS  V0a draws 144 models  — 144
+PASS  V3 canvas drawn
+PASS  dropdown recolours V0a
+PASS  dropdown updates V0b  — 16 ms
+PASS  timing: recolour (select → leaderboard updated)  — 16 ms
+PASS  categorical colour + legend  — 17 ms
+PASS  frac |z|>2 colour loads z and recolours
+PASS  funky heatmap renders
+PASS  leaderboard click selects model  — 59 ms
+PASS  V0a highlights selected model
+PASS  timing: model lasso  — 22 ms
+PASS  V0a lasso selects models  — 108 models · all cells (22 ms mouse-up → selection rendered)
+PASS  reset clears selection
+PASS  V3 click selects two models
+PASS  renders v1
+PASS  renders v2
+PASS  renders v4
+PASS  renders v5
+PASS  renders v6
+PASS  renders v7
+PASS  timing: cell map recolour  — 18 ms
+PASS  cell map hover tooltip
+PASS  timing: cell lasso (incl. V6/V0a/V7 recompute)  — 30 ms
+PASS  V1 lasso selects cells  — 0 models · 1,950 cells (30 ms mouse-up → selection + linked views rendered)
+PASS  V6 edges recoloured for cell selection
+PASS  V7 inspector shows selection
+PASS  V4 row click selects region  — 0 models · 147 cells · region R10
+PASS  V7 shows top genes for region
+PASS  V6 node click selects models and filters V5  — 1872 → 39 cells
+PASS  measure mode switch shows exploratory banner
+PASS  V8 JSON download  — decision-pca.n500.ba0.ex0.study.s0.json
+PASS  V8 Markdown download
+PASS  no console errors
+
+chrome/dark: 36/36 passed
+PASS  renders v0a
+PASS  renders v0b
+PASS  renders v3
+PASS  V0a draws 144 models  — 144
+PASS  V3 canvas drawn
+PASS  dropdown recolours V0a
+PASS  dropdown updates V0b  — 58 ms
+PASS  timing: recolour (select → leaderboard updated)  — 58 ms
+PASS  categorical colour + legend  — 30 ms
+PASS  frac |z|>2 colour loads z and recolours
+PASS  funky heatmap renders
+PASS  leaderboard click selects model  — 90 ms
+PASS  V0a highlights selected model
+PASS  timing: model lasso  — 42 ms
+PASS  V0a lasso selects models  — 108 models · all cells (42 ms mouse-up → selection rendered)
+PASS  reset clears selection
+PASS  V3 click selects two models
+PASS  renders v1
+PASS  renders v2
+PASS  renders v4
+PASS  renders v5
+PASS  renders v6
+PASS  renders v7
+PASS  timing: cell map recolour  — 27 ms
+PASS  cell map hover tooltip
+PASS  timing: cell lasso (incl. V6/V0a/V7 recompute)  — 42 ms
+PASS  V1 lasso selects cells  — 0 models · 1,950 cells (42 ms mouse-up → selection + linked views rendered)
+PASS  V6 edges recoloured for cell selection
+PASS  V7 inspector shows selection
+PASS  V4 row click selects region  — 0 models · 147 cells · region R10
+PASS  V7 shows top genes for region
+PASS  V6 node click selects models and filters V5  — 1872 → 39 cells
+PASS  measure mode switch shows exploratory banner
+PASS  V8 JSON download  — decision-pca.n500.ba0.ex0.study.s0.json
+PASS  V8 Markdown download
+PASS  no console errors
+
+firefox/dark: 36/36 passed

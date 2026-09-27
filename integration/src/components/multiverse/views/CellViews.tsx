@@ -50,7 +50,7 @@ export default function CellViews() {
         </button>
       </div>
     );
-  if (!cells) return <p className="mv-loading" role="status">Loading cell-level data (≈ 5 MB)…</p>;
+  if (!cells) return <p className="mv-loading" role="status">Loading cell-level data (≈ 8 MB)…</p>;
 
   const opts = cellColorOptions(manifest, cells, state.mode);
   const groups = Array.from(new Set(opts.map((o) => o.group)));
