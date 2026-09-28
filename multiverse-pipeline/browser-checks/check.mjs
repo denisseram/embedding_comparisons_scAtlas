@@ -1,4 +1,4 @@
-// End-to-end browser checks for the /multiverse page (36 checks).
+// End-to-end browser checks for the /multiverse page (51 checks).
 // Usage: npm install && npx playwright install firefox webkit
 //        node check.mjs <url> <chrome|chromium|firefox|webkit> [light|dark]
 // 'chrome' uses the locally installed Google Chrome; the others use Playwright's browsers.
@@ -95,6 +95,26 @@ await page.waitForTimeout(200);
 check('embedding panel model picker', (await page.locator('[aria-label^="UMAP of embedding"]').count()) === nPanels + 1);
 await page.getByLabel('Colour cells by').selectOption('cat:cell_type');
 check('embedding viewer recolours', (await page.locator('.mv-embed-panel .mv-swatches').first().innerText()).includes('T-A'));
+
+// label mixing tab: comparative fuzzy UpSet
+await page.getByRole('tab', { name: /Label mixing/ }).click();
+await page.waitForSelector('svg[aria-label^="Fuzzy UpSet"]', { timeout: 15000 });
+const upsetTop = () => page.locator('section[aria-labelledby=fu-title] .mv-table tbody tr').first().locator('td').first().textContent();
+check('fuzzy UpSet renders (cell_type)', (await page.locator('svg[aria-label^="Fuzzy UpSet"] circle').count()) > 0);
+check('fuzzy UpSet ranks a planted mixing first', ['T-A & T-B', 'Ciliated & Epithelial'].includes(await upsetTop()), await upsetTop());
+ms = await timed(() => page.getByLabel('Membership threshold tau').fill('0.3'), () => document.querySelector('section[aria-labelledby=fu-title]').textContent.includes('τ (threshold) = 0.30'));
+results.push({ name: 'timing: fuzzy UpSet tau change', ok: ms < 200, detail: `${ms} ms` });
+await page.getByLabel('Membership threshold tau').fill('0.1');
+await page.getByRole('button', { name: /^sample \(/ }).click();
+check('fuzzy UpSet switches label column', (await upsetTop()).startsWith('s'), await upsetTop());
+await page.getByRole('button', { name: /^cell_type \(/ }).click();
+{
+  const box = await page.locator('svg[aria-label^="Fuzzy UpSet"]').boundingBox();
+  ms = await timed(() => page.mouse.click(box.x + 261, box.y + 60), () => !document.querySelector('.mv-selection-summary').textContent.includes('all cells'));
+  results.push({ name: 'timing: fuzzy UpSet click → cell selection', ok: ms < 200, detail: `${ms} ms` });
+  check('fuzzy UpSet click selects cells', /\d+ cells/.test(await summary()), await summary());
+}
+await page.getByRole('button', { name: 'Reset selection' }).click();
 
 // cell tab
 await page.getByRole('tab', { name: /Cells/ }).click();

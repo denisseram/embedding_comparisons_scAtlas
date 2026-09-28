@@ -42,6 +42,7 @@ seed is `20260927`.
 | measures | `pipeline/measures.py` | Δ, seed noise, z, E/H per factor, agreement A(a,b), consensus stability, z vs references |
 | regions | `pipeline/regions.py` | Leiden on the E-profile with a consensus-kNN spatial constraint; per-region compositions, QC, Wilcoxon top genes |
 | variants | `pipeline/variants.py` | per region × model: typical / merged / split / joined |
+| fuzzy UpSet | `pipeline/fuzzy_upset.py` | neighbour-label memberships per model (exported by the export step); CLI tables under `fuzzy_upset/` |
 | export | `pipeline/export.py` | `../integration/public/multiverse-data/` (see its `README.md`) |
 | validate | `pipeline/validate.py` | `validation_results.md`, `validation.json` |
 
@@ -90,8 +91,8 @@ for it are under "Browser checks".
 
 ## Web export and dashboard
 
-`pipeline/export.py` writes compact files to `integration/public/multiverse-data/`: 13 files,
-**22.9 MB** in total (budget 25 MB). Dtypes, shapes and orders are documented in the generated
+`pipeline/export.py` writes compact files to `integration/public/multiverse-data/`: 14 files,
+**23.8 MB** in total (budget 25 MB; the fuzzy UpSet file adds 0.83 MB gzipped, 2026-09-28). Dtypes, shapes and orders are documented in the generated
 [`README.md` there](../integration/public/multiverse-data/README.md). The browser loader
 (`integration/src/components/multiverse/data/loader.ts`) validates every shape and byte count
 against `manifest.json` and shows a readable error on mismatch.
@@ -117,6 +118,7 @@ Everything that depends on a selection is computed in the browser:
 |---|---|
 | V0a model map | UMAP (precomputed A, n_neighbors=10), t-SNE (precomputed A, perplexity 15) or classical MDS of all models. The colour dropdown offers multiverse measures (consensus share, mean Δ, fraction \|z\|>2 vs the reference), decisions (every factor + seed) and every benchmark metric (overall / bio / batch, each metric raw and scaled). Seed replicates are joined by thin outlines. Hover, click, shift-click and lasso. |
 | V0b leaderboard | Top 10 for the benchmark metric chosen in its own **Rank by** dropdown (aggregates, raw or scaled metrics): sortable table with seed sd and an "≈1" marker when within noise of rank 1, or a D3 funky heatmap (setup / overall / batch / bio; bars and circles) |
+| Label mixing tab | comparative fuzzy UpSet: which labels mix in each model's kNN graph, and how that differs across models. See [Label mixing (fuzzy UpSet)](#label-mixing-fuzzy-upset). |
 | Embeddings tab | the standard UMAP of **each** embedding (scanpy `pp.neighbors` on that model's latent + `tl.umap`), up to 4 side by side, coloured by sample / study / cell type / QC / any measure, with each model's iLISI, kBET, PCR, ARI and NMI. Defaults to the reference model and its counterparts with the other methods (same features and seed). Lasso selects cells everywhere. For checking integrations visually. |
 | V1 fixed cell map | UMAP of the consensus kNN graph on canvas (hex-binned density from 50,000 cells), coloured by any obs, QC, measure, region or z; quadtree hover, lasso, pan/zoom, click-to-highlight legend |
 | V2 stability map | all-model vs seed-only consensus stability side by side |
@@ -164,6 +166,96 @@ Choices made for the export (`pipeline/export_ec.py`):
   - **True biology**: the simulator's noise-free, batch-free profile, added to `toy.h5ad` as `obsm["X_truth"]` without changing any counts. It is simulation-only and has exact ties, so severity uses additive smoothing (dd + f)/(cc + f), with f = 5% of the median distance.
   - **Observed expression**: uncorrected. It is available on real data, but it rewards leaving batch effects in place.
 
+## Label mixing (fuzzy UpSet)
+
+Added 2026-09-28. The **Label mixing** tab shows which labels of one column (`cell_type`, `sample`,
+`study` or `tissue`, one UpSet per column, never mixed) share neighbourhoods in each embedding, and
+how that differs across embeddings.
+
+**What is computed** (`pipeline/fuzzy_upset.py`; the browser re-implements the last steps in
+`compute/fuzzyUpset.ts`, and a pytest parity test runs both on the same inputs):
+
+1. **Memberships.** A = binarised, directed k = 15 kNN graph of the model's own latent space with
+   self-loops, row-normalised. L = one-hot labels. P = A·L, so P[i, l] is the fraction of cell i's
+   16-cell neighbourhood with label l. Unlabelled cells have no label but still count as neighbours.
+2. **Signatures.** A cell belongs to every label with P ≥ τ. Its signature is that set of labels. More
+   than *max size* labels puts it in the **diffuse** bucket; no label ≥ τ puts it in **none**. Both
+   counts are shown.
+3. **Fuzzy size.** A cell's strength is the smallest of its memberships over the signature. Per
+   intersection: cells, fuzzy size (sum of strengths) and mean strength.
+4. **Comparison.** Intersection × model table of fuzzy sizes (0 if absent). The difference score
+   is max − min or variance across the compared models, or |log2 ratio| (pseudocount 1) for
+   exactly two.
+5. **Attributes** for the focused model: composition by a second column and mean `total_counts`,
+   `pct_mito`, `doublet_score` (`n_genes` does not exist in this dataset).
+
+**Reading the view.** Columns are intersections. The bar is the focused model's fuzzy size. The
+strip below has one row per compared model (focused model first), and the dot matrix names the
+labels. Sorting is by difference across models (default), fuzzy size or cells. Pure (single-label)
+intersections are hidden by default. Clicking a column selects that intersection's cells in the
+focused model. They are highlighted on the focused model's UMAP next to the chart and in the
+Cells / Embeddings tabs. Clicking a strip cell focuses that model. A table view is under the chart.
+
+**Parameters.**
+
+| parameter | default | where |
+|---|---|---|
+| τ (threshold) | 0.1 raw, 1.0 in enrichment mode | browser slider |
+| max labels per intersection | 3 | browser |
+| enrichment normalisation | off | browser |
+| compared / focused models | reference setup (seed 0) × 3 methods × 2 batch keys | browser |
+| k | 15 | `fuzzy_upset.k` in config.yaml (needs re-export) |
+| exported models | seed 0 of each configuration (48) | `fuzzy_upset.models` (`seed0` / `all` / list) |
+
+In **enrichment mode**, τ applies to P ÷ global label frequency, so τ = 1 means "as common as in
+the whole dataset". Rare labels can then enter a signature. Strengths and fuzzy sizes always use the
+raw fractions (0–1).
+
+**Interpretation.**
+- For **cell-type labels**, mixing usually means lost biology: two populations the embedding no
+  longer separates. On the toy data, T-A & T-B (planted P1) and Ciliated & Epithelial (P2) rank first.
+- For **batch labels** (sample, study), mixing is usually what integration is supposed to achieve.
+  A large {s1, s2, s3} intersection means those samples share neighbourhoods. If it is absent in
+  one model, that model left a batch effect.
+- **Compare across models, not in absolute terms.** The difference score is the point of the view.
+
+**Known limitations.**
+- **Threshold sensitivity.** With k = 15, memberships move in steps of 1/16 = 0.0625, so τ = 0.1
+  means "at least 2 of 16". Small τ changes do nothing, and crossing a step can move many cells at
+  once.
+- **Label imbalance.** Large labels dominate fuzzy sizes. Enrichment mode helps rare labels pass τ
+  but does not rescale sizes.
+- **Natural mixing at boundaries.** Related cell states (subtypes, differentiation trajectories)
+  mix at their borders in any good embedding. Treat a mixed intersection as a pointer to inspect,
+  not a verdict.
+- **Directed graph.** Asymmetric neighbourhoods are kept as is. A cell can list neighbours that
+  do not list it back.
+- **Not exported: 96 models.** Only the seed-0 replicates are in the browser, to stay within the
+  budget. The Python CLI covers all models.
+- The browser file stores exact neighbour counts, so changing k needs a re-export.
+
+**Offline / large scale.**
+
+```bash
+python -m pipeline.fuzzy_upset --label cell_type [--tau 0.1 --max-size 3 --normalize --models all \
+       --how log_ratio --pair A,B --show-pure]      # tables in outputs/<name>/fuzzy_upset/
+make export-fuzzy                                   # refresh only the browser file + manifest
+python -m pipeline.fuzzy_upset_scale                # 1M cells × 20 models scale check
+```
+
+Per-model signatures are cached on disk, keyed by model, label column, k, τ, max size,
+normalisation and the kNN file's timestamp. The browser memoises the same key. Scale check
+(Apple M1, 2026-09-28): 1,000,000 cells × 20 models, k = 15, 20 labels, 1% unlabelled.
+
+| step | time |
+|---|---|
+| memberships | 10.5 s |
+| signatures | 29.9 s |
+| tables and ranking | 0.6 s |
+
+Peak RSS was 0.71 GB. Graphs are processed one model at a time; no dense cell × cell matrix is
+built. On the toy data, the CLI takes 2.7 s for 48 models with a peak RSS of 0.2 GB.
+
 ## Deploy
 
 The site is fully static: no adapter, no API routes. The dashboard fetches only
@@ -195,14 +287,15 @@ run in CI because the data is committed.
 
 ## Browser checks
 
-`browser-checks/check.mjs` (Playwright, 45 checks) covers:
+`browser-checks/check.mjs` (Playwright, 51 checks since 2026-09-28) covers:
 
 - no console errors,
 - every view renders,
 - the dropdown recolours V0a and updates V0b, including the lazy frac-|z| colour,
 - funky heatmap,
 - linking: leaderboard click, V0a lasso, V3 click, V1 hover and lasso → V6/V7, V4 region click,
-  V6 node → V5 filter,
+  V6 node → V5 filter, fuzzy UpSet column click → cell selection,
+- fuzzy UpSet: renders, ranks a planted mixing first, τ change, label-column switch,
 - measure-mode switch, reset,
 - V8 JSON and Markdown downloads,
 - interaction timings.
