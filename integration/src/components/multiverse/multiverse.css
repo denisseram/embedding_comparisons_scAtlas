@@ -438,3 +438,11 @@
   max-width: none;
   min-height: 70px;
 }
+
+/* fuzzy UpSet: checkbox labels sit on one line inside .mv-inline rows */
+.mv-inline label.mv-check {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  align-self: center;
+}

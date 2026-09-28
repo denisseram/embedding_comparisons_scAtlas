@@ -12,6 +12,7 @@ const CellViews = lazy(() => import('./views/CellViews'));
 const AgreementMatrix = lazy(() => import('./views/AgreementMatrix'));
 const DecisionRecord = lazy(() => import('./views/DecisionRecord'));
 const EmbeddingViewer = lazy(() => import('./views/EmbeddingViewer'));
+const FuzzyUpset = lazy(() => import('./views/FuzzyUpset'));
 
 export default function MultiverseApp() {
   const [entry, setEntry] = useState<EntryData | null>(null);
@@ -59,7 +60,7 @@ export default function MultiverseApp() {
   );
 }
 
-type Tab = 'models' | 'embeddings' | 'cells' | 'record';
+type Tab = 'models' | 'embeddings' | 'mixing' | 'cells' | 'record';
 
 function Shell() {
   const { entry, fracZNote, zError, requestZ, zStatus } = useData();
@@ -167,6 +168,7 @@ function Shell() {
           [
             ['models', 'Models (V0a, V0b, V3)'],
             ['embeddings', 'Embeddings (UMAP per model)'],
+            ['mixing', 'Label mixing (fuzzy UpSet)'],
             ['cells', 'Cells & regions (V1–V7)'],
             ['record', 'Decision record (V8)'],
           ] as [Tab, string][]
@@ -195,6 +197,7 @@ function Shell() {
           </div>
         )}
         {tab === 'embeddings' && <EmbeddingViewer />}
+        {tab === 'mixing' && <FuzzyUpset />}
         {tab === 'cells' && <CellViews />}
         {tab === 'record' && <DecisionRecord />}
       </Suspense>
