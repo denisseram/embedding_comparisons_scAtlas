@@ -24,8 +24,9 @@ from pipeline.integrate import FACTORS
 
 log = get_logger("export")
 warnings.filterwarnings("ignore")
-SCHEMA_VERSION = "1.3.0"  # 1.1: models.json layout gains "tsne"; 1.2: optional umap_models.bin;
-#                          1.3: optional fuzzy_memberships.bin.gz (gzip) + manifest.fuzzy_upset
+SCHEMA_VERSION = "1.4.0"  # 1.1: models.json layout gains "tsne"; 1.2: optional umap_models.bin;
+#                          1.3: optional fuzzy_memberships.bin.gz (gzip) + manifest.fuzzy_upset;
+#                          1.4: optional fuzzy_regions.bin.gz + manifest.fuzzy_upset.regions
 
 
 def classical_mds(D: np.ndarray, dim: int = 2) -> np.ndarray:
@@ -237,13 +238,14 @@ def main(cfg: dict | None = None) -> dict:
         umap_info = {"min": lo.round(4).tolist(), "max": hi.round(4).tolist(),
                      "recipe": f"scanpy pp.neighbors(use_rep=latent, n_neighbors={cfg['per_model_umap'].get('n_neighbors', 15)}) + tl.umap, random_state={gs}"}
 
-    # ---- fuzzy_memberships.bin.gz (comparative fuzzy UpSet, optional) ------------------------------
+    # ---- fuzzy_memberships.bin.gz + fuzzy_regions.bin.gz (comparative fuzzy UpSet, optional) --------
     fuzzy_info = None
     fz = fuzzy_upset.export_payload(cfg, obs, models)
     if fz:
-        gz, entry, fuzzy_info = fz
-        (ex / fuzzy_upset.EXPORT_FILE).write_bytes(gz)
-        files[fuzzy_upset.EXPORT_FILE] = entry
+        out, fuzzy_info = fz
+        for name, (gz, entry) in out.items():
+            (ex / name).write_bytes(gz)
+            files[name] = entry
 
     # ---- manifest ---------------------------------------------------------------------------
     for name in files:

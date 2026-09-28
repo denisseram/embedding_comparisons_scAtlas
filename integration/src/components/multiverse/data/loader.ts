@@ -269,16 +269,33 @@ export async function loadFuzzy(manifest: Manifest): Promise<Uint8Array | null> 
   if (!entry?.shape || entry.dtype !== 'uint8') throw new DataError(`manifest.json does not list ${info.file} as uint8.`);
   const expect = [info.models.length, manifest.dataset.n_cells, info.n_levels];
   if (entry.shape.join() !== expect.join()) throw new DataError(`${info.file}: manifest shape [${entry.shape}] does not match expected [${expect}].`);
-  let buf = new Uint8Array(await (await fetchOk(info.file)).arrayBuffer());
+  return fetchGunzip(info.file, expect.reduce((a, b) => a * b, 1));
+}
+
+/** Fetch a .gz file and return its decompressed bytes, checked against the expected length. */
+async function fetchGunzip(name: string, nBytes: number): Promise<Uint8Array> {
+  let buf = new Uint8Array(await (await fetchOk(name)).arrayBuffer());
   // hosts that serve .gz with Content-Encoding: gzip hand us already-decompressed bytes
   if (buf[0] === 0x1f && buf[1] === 0x8b) {
     if (typeof DecompressionStream === 'undefined') throw new DataError('This browser cannot decompress gzip (DecompressionStream missing).');
     const stream = new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'));
     buf = new Uint8Array(await new Response(stream).arrayBuffer());
   }
-  const n = expect.reduce((a, b) => a * b, 1);
-  if (buf.byteLength !== n) throw new DataError(`${info.file}: decompressed to ${buf.byteLength} bytes, expected ${n}.`);
+  if (buf.byteLength !== nBytes) throw new DataError(`${name}: decompressed to ${buf.byteLength} bytes, expected ${nBytes}.`);
   return buf;
+}
+
+/** Fuzzy UpSet mixed-region ids [tau, column, model, cell] (int16, -1 = none); null if the export has none. */
+export async function loadFuzzyRegions(manifest: Manifest): Promise<Int16Array | null> {
+  const info = manifest.fuzzy_upset;
+  const r = info?.regions;
+  if (!info || !r) return null;
+  const entry = manifest.files[r.file];
+  const expect = [r.taus.length, info.columns.length, info.models.length, manifest.dataset.n_cells];
+  if (!entry?.shape || entry.dtype !== 'int16') throw new DataError(`manifest.json does not list ${r.file} as int16.`);
+  if (entry.shape.join() !== expect.join()) throw new DataError(`${r.file}: manifest shape [${entry.shape}] does not match expected [${expect}].`);
+  const buf = await fetchGunzip(r.file, expect.reduce((a, b) => a * b, 1) * 2);
+  return new Int16Array(buf.buffer, buf.byteOffset, buf.byteLength / 2);
 }
 
 export function cellArray(cd: CellData, name: string, N: number): Float32Array {

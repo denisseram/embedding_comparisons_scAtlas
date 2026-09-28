@@ -9,13 +9,15 @@ import { useSelection } from '../state';
 import { INK, categorical, fmt, sequential, useTheme } from '../d3/colors';
 import { Swatches } from '../d3/Legend';
 import { Tooltip, type Tip } from '../d3/Tooltip';
-import { loadFuzzy, loadModelUmaps, modelUmap, type ModelUmaps } from '../data/loader';
+import { loadFuzzy, loadFuzzyRegions, loadModelUmaps, modelUmap, type ModelUmaps } from '../data/loader';
 import {
   attributes,
   cachedSignatures,
   cellsFor,
   compareModels,
   difference,
+  DIFFUSE_KEY,
+  regionSignatures,
   type DiffKind,
   type FuzzyInfo,
   type Intersection,
@@ -63,15 +65,19 @@ function GlyphLegend({ max, color }: { max: number; color: (v: number) => string
 }
 
 let countsCache: Promise<Uint8Array | null> | null = null;
+let regionsCache: Promise<Int16Array | null> | null = null;
 let umapCache: Promise<ModelUmaps | null> | null = null;
 
 type SortKey = 'difference' | 'fuzzy' | 'n_cells';
+type Mode = 'cell' | 'region';
 
 export default function FuzzyUpset() {
   const { entry, cells, cellsStatus, cellsError, requestCells } = useData();
   const { manifest } = entry;
   const info = manifest.fuzzy_upset;
   const [counts, setCounts] = useState<Uint8Array | null | undefined>(undefined);
+  const [regions, setRegions] = useState<Int16Array | null>(null);
+  const [regionsError, setRegionsError] = useState<string | null>(null);
   const [umaps, setUmaps] = useState<ModelUmaps | null | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,6 +88,11 @@ export default function FuzzyUpset() {
     countsCache.then(setCounts).catch((e: Error) => {
       countsCache = null;
       setError(e.message);
+    });
+    regionsCache ??= loadFuzzyRegions(manifest);
+    regionsCache.then(setRegions).catch((e: Error) => {
+      regionsCache = null;
+      setRegionsError(e.message); // per-cell mode still works
     });
     umapCache ??= loadModelUmaps(manifest);
     umapCache.then(setUmaps).catch(() => {
@@ -103,10 +114,22 @@ export default function FuzzyUpset() {
       </div>
     );
   if (!counts || !cells || umaps === undefined) return <p className="mv-loading" role="status">Loading neighbour-label memberships (≈ 0.8 MB) and cell annotations…</p>;
-  return <UpsetPanel info={info} counts={counts} umaps={umaps} />;
+  return <UpsetPanel info={info} counts={counts} regions={regions} regionsError={regionsError} umaps={umaps} />;
 }
 
-function UpsetPanel({ info, counts, umaps }: { info: FuzzyInfo; counts: Uint8Array; umaps: ModelUmaps | null }) {
+function UpsetPanel({
+  info,
+  counts,
+  regions,
+  regionsError,
+  umaps,
+}: {
+  info: FuzzyInfo;
+  counts: Uint8Array;
+  regions: Int16Array | null;
+  regionsError: string | null;
+  umaps: ModelUmaps | null;
+}) {
   const { entry, cells } = useData();
   const cd = cells!;
   const { manifest, models } = entry;
@@ -129,6 +152,10 @@ function UpsetPanel({ info, counts, umaps }: { info: FuzzyInfo; counts: Uint8Arr
   }, [state.referenceModel, manifest, models, info]);
 
   const [colIdx, setColIdx] = useState(0);
+  const [mode, setMode] = useState<Mode>('cell');
+  const regionTaus = info.regions?.taus ?? [];
+  const [regionTauIdx, setRegionTauIdx] = useState(Math.max(0, regionTaus.indexOf(info.defaults.tau)));
+  const regionMode = mode === 'region' && !!regions;
   // raw fractions and enrichment live on different scales, so each keeps its own threshold
   const [tauByMode, setTauByMode] = useState({ raw: info.defaults.tau, enrich: 1 });
   const [maxSize, setMaxSize] = useState(info.defaults.max_size);
@@ -160,10 +187,14 @@ function UpsetPanel({ info, counts, umaps }: { info: FuzzyInfo; counts: Uint8Arr
   const diff: DiffKind = diffKind === 'log_ratio' && !canLogRatio ? 'range' : diffKind;
 
   const cmp = useMemo(() => {
+    if (regionMode) {
+      const per = rowsModels.map((id) => regionSignatures(regions!, counts, info, N, info.models.indexOf(id), colIdx, regionTauIdx));
+      return { ...compareModels(per), nRegions: per[0].nRegions };
+    }
     const p = { tau, maxSize, normalize };
     const per = rowsModels.map((id) => cachedSignatures(counts, info, N, info.models.indexOf(id), col, p));
-    return compareModels(per);
-  }, [counts, info, N, col, tau, maxSize, normalize, rowsModels]);
+    return { ...compareModels(per, true), nRegions: 0 };
+  }, [counts, regions, regionMode, regionTauIdx, info, N, col, colIdx, tau, maxSize, normalize, rowsModels]);
   const focusSig = cmp.perModel[0];
 
   // composition column: never the label column itself
@@ -181,15 +212,16 @@ function UpsetPanel({ info, counts, umaps }: { info: FuzzyInfo; counts: Uint8Arr
   const { shown, total } = useMemo(() => {
     const score = (it: Intersection) =>
       sortKey === 'fuzzy' ? it.fuzzy[0] : sortKey === 'n_cells' ? it.nCells[0] : Math.abs(difference(it, diff, [0, 1]));
+    // regions are mixed by construction, so the pure filter does not apply to them; diffuse is never "pure"
     const keep = cmp.intersections.filter(
       (it) =>
-        (showPure || it.labels.length > 1) &&
+        (regionMode || showPure || it.labels.length !== 1) &&
         Math.max(...it.fuzzy) >= minSize &&
-        (!q || it.labels.some((l) => col.levels[l].toLowerCase().includes(q))),
+        (!q || (it.key === DIFFUSE_KEY ? 'diffuse'.includes(q) : it.labels.some((l) => col.levels[l].toLowerCase().includes(q)))),
     );
     const sorted = keep.map((it) => ({ it, s: score(it) })).sort((a, b) => b.s - a.s).map((x) => x.it);
     return { shown: sorted.slice(0, MAX_COLS), total: sorted.length };
-  }, [cmp, showPure, minSize, q, col, sortKey, diff]);
+  }, [cmp, regionMode, showPure, minSize, q, col, sortKey, diff]);
 
   const maxFuzzy = useMemo(() => Math.max(1, ...shown.flatMap((it) => Array.from(it.fuzzy))), [shown]);
   const heat = useMemo(() => sequential(theme, [0, maxFuzzy]), [theme, maxFuzzy]);
@@ -215,7 +247,10 @@ function UpsetPanel({ info, counts, umaps }: { info: FuzzyInfo; counts: Uint8Arr
     setActiveKey(key);
     dispatch({ type: 'selectCells', cells: cellsFor(cmp.perModel[mIdx], key) });
   };
-  const names = (it: Intersection) => it.labels.map((l) => col.levels[l]).join(' & ');
+  const names = (it: Intersection) =>
+    it.key === DIFFUSE_KEY
+      ? `diffuse: more than ${maxSize} labels ≥ τ`
+      : (regionMode ? 'mixed region(s): ' : '') + (it.labels.map((l) => col.levels[l]).join(' & ') || 'no label ≥ τ on average');
 
   // ---- SVG ----------------------------------------------------------------------------------------------
   const ref = useRef<SVGSVGElement>(null);
@@ -318,14 +353,23 @@ function UpsetPanel({ info, counts, umaps }: { info: FuzzyInfo; counts: Uint8Arr
       const member = new Set(it.labels);
       const ys = it.labels.map((l) => yDots + l * DOT_ROW + DOT_ROW / 2);
       if (ys.length > 1) g.append('line').attr('x1', cx).attr('x2', cx).attr('y1', Math.min(...ys)).attr('y2', Math.max(...ys)).attr('stroke', ink.primary).attr('stroke-width', 2);
-      for (let l = 0; l < L; l++)
-        g.append('circle')
-          .attr('cx', cx)
-          .attr('cy', yDots + l * DOT_ROW + DOT_ROW / 2)
-          .attr('r', 4.5)
-          .attr('fill', member.has(l) ? ink.primary : ink.grid)
-          .attr('stroke', member.has(l) ? ink.surface : 'none')
-          .attr('stroke-width', 2);
+      if (it.key === DIFFUSE_KEY) {
+        // no fixed label set: name the column inside the dot matrix
+        g.append('text')
+          .attr('class', 'mv-fh-col')
+          .attr('transform', `translate(${cx + 4},${yDots + (L * DOT_ROW) / 2}) rotate(-90)`)
+          .attr('text-anchor', 'middle')
+          .style('font-weight', '700')
+          .text(`> ${maxSize} labels`);
+      } else
+        for (let l = 0; l < L; l++)
+          g.append('circle')
+            .attr('cx', cx)
+            .attr('cy', yDots + l * DOT_ROW + DOT_ROW / 2)
+            .attr('r', 4.5)
+            .attr('fill', member.has(l) ? ink.primary : ink.grid)
+            .attr('stroke', member.has(l) ? ink.surface : 'none')
+            .attr('stroke-width', 2);
       // composition (stacked, 2px surface gaps)
       const comp = attrs.composition.get(it.key);
       if (comp && secondCol) {
@@ -377,7 +421,7 @@ function UpsetPanel({ info, counts, umaps }: { info: FuzzyInfo; counts: Uint8Arr
       });
       g.on('pointerleave', () => setTip(null));
     });
-  }, [shown, cmp, theme, activeKey, rowsModels, col, attrs, secondCol, secondName, barColor, qcCols.join(), qcRange, heat, compColor, maxFuzzy, width, height, heatRow, diff, focus]);
+  }, [shown, cmp, theme, activeKey, rowsModels, col, attrs, secondCol, secondName, barColor, qcCols.join(), qcRange, heat, compColor, maxFuzzy, width, height, heatRow, diff, focus, maxSize, regionMode]);
 
   // ---- linked UMAP of the focused model -------------------------------------------------------------------
   const focusIdx = models.findIndex((m) => m.model_id === focus);
@@ -405,24 +449,53 @@ function UpsetPanel({ info, counts, umaps }: { info: FuzzyInfo; counts: Uint8Arr
         </nav>
 
         <div className="mv-inline" style={{ marginBottom: 8 }}>
-          <label>
-            τ (threshold) = {tau.toFixed(2)}
-            <input type="range" min={0.01} max={tauMax} step={0.01} value={tau} onChange={(e) => setTau(+e.target.value)} aria-label="Membership threshold tau" />
-          </label>
-          <label>
-            Max labels per intersection
-            <select value={maxSize} onChange={(e) => setMaxSize(+e.target.value)}>
-              {[1, 2, 3, 4, 5].map((v) => (
-                <option key={v} value={v}>
-                  {v}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="mv-small mv-check">
-            <input type="checkbox" checked={normalize} onChange={(e) => setNormalize(e.target.checked)} /> Threshold
-            enrichment (fraction ÷ label's global frequency)
-          </label>
+          <div className="mv-seg" role="group" aria-label="Group cells by" style={{ alignSelf: 'center' }}>
+            <button type="button" aria-pressed={mode === 'cell'} onClick={() => (setMode('cell'), setActiveKey(null))}>
+              Per cell
+            </button>
+            <button
+              type="button"
+              aria-pressed={mode === 'region'}
+              disabled={!regions}
+              title={regions ? undefined : regionsError ?? 'This export has no mixed regions (run make export-fuzzy).'}
+              onClick={() => (setMode('region'), setActiveKey(null))}
+            >
+              Mixed regions
+            </button>
+          </div>
+          {regionMode ? (
+            <label>
+              τ (threshold)
+              <select value={regionTauIdx} onChange={(e) => setRegionTauIdx(+e.target.value)} aria-label="Membership threshold tau for regions">
+                {regionTaus.map((t, i) => (
+                  <option key={t} value={i}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : (
+            <>
+              <label>
+                τ (threshold) = {tau.toFixed(2)}
+                <input type="range" min={0.01} max={tauMax} step={0.01} value={tau} onChange={(e) => setTau(+e.target.value)} aria-label="Membership threshold tau" />
+              </label>
+              <label>
+                Max labels per intersection
+                <select value={maxSize} onChange={(e) => setMaxSize(+e.target.value)}>
+                  {[1, 2, 3, 4, 5, 6, 7].map((v) => (
+                    <option key={v} value={v}>
+                      {v}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="mv-small mv-check">
+                <input type="checkbox" checked={normalize} onChange={(e) => setNormalize(e.target.checked)} /> Threshold
+                enrichment (fraction ÷ label's global frequency)
+              </label>
+            </>
+          )}
           <label>
             Focused model
             <select value={focus} onChange={(e) => setFocus(e.target.value)}>
@@ -467,9 +540,11 @@ function UpsetPanel({ info, counts, umaps }: { info: FuzzyInfo; counts: Uint8Arr
             Min fuzzy size
             <input type="number" min={0} step={1} value={minSize} onChange={(e) => setMinSize(Math.max(0, +e.target.value))} style={{ width: 70 }} />
           </label>
-          <label className="mv-small mv-check">
-            <input type="checkbox" checked={showPure} onChange={(e) => setShowPure(e.target.checked)} /> Show pure (single-label) intersections
-          </label>
+          {!regionMode && (
+            <label className="mv-small mv-check">
+              <input type="checkbox" checked={showPure} onChange={(e) => setShowPure(e.target.checked)} /> Show pure (single-label) intersections
+            </label>
+          )}
           <label>
             Search labels
             <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="e.g. T-A" style={{ width: 110 }} />
@@ -478,7 +553,15 @@ function UpsetPanel({ info, counts, umaps }: { info: FuzzyInfo; counts: Uint8Arr
 
         <ModelPicker info={info} compared={compared} setCompared={setCompared} defaults={defaults.compared} short={short} />
 
-        {normalize && (
+        {regionMode && (
+          <p className="mv-small mv-muted">
+            <strong>Mixed regions.</strong> A cell is mixed when at least two labels reach τ in its neighbourhood (no maximum). Mixed cells that are
+            neighbours in the model's kNN graph are joined into one region (regions under {info.regions?.min_size} cells are left out). Each region gets
+            one signature: the labels whose average fraction over the region reaches τ. A heterogeneous cluster, which the per-cell view splits into many
+            small columns, becomes one column here. Regions with the same signature are pooled.
+          </p>
+        )}
+        {!regionMode && normalize && (
           <p className="mv-warning">
             Enrichment mode: τ applies to fraction ÷ global label frequency (τ = 1 means “as common as in the whole dataset”). Strengths and fuzzy sizes
             still use the raw fractions (0–1).
@@ -497,8 +580,11 @@ function UpsetPanel({ info, counts, umaps }: { info: FuzzyInfo; counts: Uint8Arr
         )}
 
         <p className="mv-small" aria-live="polite">
-          <strong>{short(focus)}</strong>: {focusSig.nDiffuse.toLocaleString()} diffuse cells (&gt; {maxSize} labels ≥ τ), {focusSig.nNone.toLocaleString()} with no label ≥ τ ·
-          showing {shown.length} of {total} intersections
+          <strong>{short(focus)}</strong>:{' '}
+          {regionMode
+            ? `${cmp.nRegions} mixed region${cmp.nRegions === 1 ? '' : 's'}, ${(N - focusSig.nNone).toLocaleString()} cells in them, ${focusSig.nNone.toLocaleString()} cells outside`
+            : `${focusSig.nDiffuse.toLocaleString()} diffuse cells (> ${maxSize} labels ≥ τ, shown as their own column), ${focusSig.nNone.toLocaleString()} with no label ≥ τ`}{' '}
+          · showing {shown.length} of {total} {regionMode ? 'region signatures' : 'intersections'}
           {total > MAX_COLS ? ` (top ${MAX_COLS}; raise the min size or search to narrow)` : ''}.{' '}
           <span className="mv-muted">Click a column to select its cells in the focused model; click a heatmap cell to focus that model.</span>
         </p>

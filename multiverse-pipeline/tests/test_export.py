@@ -76,6 +76,15 @@ def test_fuzzy_memberships(manifest):
         assert s.max() <= fu["k"] + 1
         if col["n_unlabelled"] == 0:
             assert (s == fu["k"] + 1).all(), col["name"]  # every neighbourhood (incl. self) fully labelled
+    r = fu.get("regions")
+    if r:
+        rshape = manifest["files"][r["file"]]["shape"]
+        assert rshape == [len(r["taus"]), len(fu["columns"]), len(fu["models"]), N]
+        R = np.frombuffer(gzip.decompress((EX / r["file"]).read_bytes()), "<i2").reshape(rshape)
+        assert R.min() >= -1
+        for ids in R.reshape(-1, N):  # region ids are 0..n-1 with every region at least min_size cells
+            b = np.bincount(ids[ids >= 0])
+            assert (b >= r["min_size"]).all()
     cells = json.loads((EX / "cells.json").read_text())
     for c in fu["second_columns"]:
         assert c in cells["categorical"]

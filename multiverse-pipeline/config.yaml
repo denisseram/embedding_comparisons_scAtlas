@@ -105,6 +105,8 @@ fuzzy_upset:                    # comparative fuzzy UpSet (pipeline/fuzzy_upset.
   qc_columns: [total_counts, pct_mito, doublet_score]
   tau: 0.1                      # default threshold (adjustable in the browser)
   max_size: 3                   # default max labels per intersection; more -> "diffuse" bucket
+  region_taus: [0.1, 0.2, 0.3]  # mixed regions need the kNN graph, so they are precomputed for these thresholds
+  region_min_size: 5            # connected groups of mixed cells smaller than this are left out
 
 layouts:
   model_umap_n_neighbors: 10

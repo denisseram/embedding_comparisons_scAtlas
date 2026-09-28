@@ -111,7 +111,7 @@ def memberships_from_adjacency(A: sp.spmatrix, codes: np.ndarray, n_labels: int)
 @dataclass
 class Signatures:
     sig: np.ndarray                  # int32 [n]: intersection id, NONE (-1) or DIFFUSE (-2)
-    strength: np.ndarray             # float32 [n]: min raw membership over the signature (0 for NONE/DIFFUSE)
+    strength: np.ndarray             # float32 [n]: min raw membership over the labels passing tau (0 for NONE)
     intersections: list[tuple[int, ...]]
     n_none: int
     n_diffuse: int
@@ -136,14 +136,16 @@ def signatures(P: sp.csr_matrix, tau: float = 0.1, max_size: int = 3, normalize:
     size = np.bincount(rows, minlength=n)
     sig = np.full(n, NONE, np.int32)
     sig[size > max_size] = DIFFUSE
+    # strength: min raw membership over the labels passing tau (for diffuse cells too, over all of them)
     strength = np.zeros(n, np.float32)
+    if len(rows):
+        smin = np.full(n, np.inf, np.float32)
+        np.minimum.at(smin, rows, raw)
+        strength[size >= 1] = smin[size >= 1]
     good = (size >= 1) & (size <= max_size)
     if good.any():
         sel = good[rows]
-        r, l, v = rows[sel], lab[sel], raw[sel]
-        smin = np.full(n, np.inf, np.float32)
-        np.minimum.at(smin, r, v)
-        strength[good] = smin[good]
+        r, l = rows[sel], lab[sel]
         # padded sorted label tuple per cell; entries are already sorted by label within a row (sort_indices)
         start = np.searchsorted(r, np.arange(n))  # first kept entry of each row
         pos = np.arange(len(r)) - start[r]
@@ -173,6 +175,81 @@ def cells_for(s: Signatures, labels: tuple[int, ...]) -> np.ndarray:
     if t not in s.intersections:
         return np.zeros(0, np.int64)
     return np.flatnonzero(s.sig == s.intersections.index(t))
+
+
+# ---- mixed regions (group-level sets) -------------------------------------------------------------
+
+def mixed_cells(P: sp.csr_matrix, tau: float = 0.1, normalize: bool = False, freq: np.ndarray | None = None
+                ) -> tuple[np.ndarray, np.ndarray]:
+    """Cells with >= 2 labels passing tau (max_size is ignored, so diffuse cells count), and each cell's
+    uncapped strength (min raw membership over its passing labels; 0 for cells with < 2)."""
+    s = signatures(P, tau, max_size=P.shape[1], normalize=normalize, freq=freq)
+    deg = np.array([len(t) for t in s.intersections] + [0], np.int64)[np.where(s.sig >= 0, s.sig, -1)]
+    mixed = deg >= 2
+    return mixed, np.where(mixed, s.strength, 0).astype(np.float32)
+
+
+def region_ids(knn: np.ndarray, mixed: np.ndarray, min_size: int = 5) -> np.ndarray:
+    """Connected components of the symmetrised kNN graph restricted to mixed cells. Returns int32 [n]:
+    region id (0.., largest first) or -1 (not mixed, or in a component smaller than min_size)."""
+    from scipy.sparse.csgraph import connected_components
+    n, k = knn.shape
+    idx = np.flatnonzero(mixed)
+    out = np.full(n, -1, np.int32)
+    if not len(idx):
+        return out
+    pos = np.full(n, -1, np.int64)
+    pos[idx] = np.arange(len(idx))
+    src = np.repeat(idx, k)
+    dst = np.asarray(knn[idx], np.int64).ravel()
+    keep = pos[dst] >= 0
+    a, b = pos[src[keep]], pos[dst[keep]]
+    G = sp.csr_matrix((np.ones(len(a), np.int8), (a, b)), shape=(len(idx), len(idx)))
+    _, lab = connected_components(G, directed=True, connection="weak")
+    sizes = np.bincount(lab)
+    order = np.argsort(-sizes, kind="stable")
+    rank = np.full(len(sizes), -1, np.int32)
+    big = order[sizes[order] >= min_size]
+    rank[big] = np.arange(len(big))
+    out[idx] = rank[lab]
+    return out
+
+
+@dataclass
+class Regions:
+    region: np.ndarray               # int32 [n]: region id or -1
+    signature: list[tuple[int, ...]] # per region: labels whose mean membership over the region >= tau
+    composition: np.ndarray          # float [n_regions, n_labels]: mean membership over the region's cells
+    n_cells: np.ndarray              # int [n_regions]
+    fuzzy_size: np.ndarray           # float [n_regions]: sum of the cells' uncapped strengths
+    n_small: int                     # mixed cells left out because their component is < min_size
+
+
+def mixed_regions(knn: np.ndarray, P: sp.csr_matrix, tau: float = 0.1, min_size: int = 5, normalize: bool = False,
+                  freq: np.ndarray | None = None) -> Regions:
+    """Group-level sets: connected regions of mixed cells, each summarised as one signature.
+
+    A heterogeneous cluster (e.g. doublets of many types) is split by the per-cell signatures into many small
+    intersections; here all its mixed cells form one region, whose signature pools their memberships."""
+    mixed, strength = mixed_cells(P, tau, normalize, freq)
+    reg = region_ids(knn, mixed, min_size)
+    R = int(reg.max()) + 1 if (reg >= 0).any() else 0
+    ok = reg >= 0
+    n = np.bincount(reg[ok], minlength=R)
+    comp = np.zeros((R, P.shape[1]))
+    if R:
+        comp = (sp.csr_matrix((np.ones(ok.sum()), (reg[ok], np.flatnonzero(ok))), shape=(R, P.shape[0])) @ P).toarray()
+        comp /= np.maximum(n, 1)[:, None]
+    score = comp / np.where(np.asarray(freq) > 0, freq, 1)[None, :] if normalize else comp
+    sigs = [tuple(int(l) for l in np.flatnonzero(score[r] >= tau)) for r in range(R)]
+    fz = np.bincount(reg[ok], weights=strength[ok], minlength=R)
+    return Regions(reg, sigs, comp, n, fz, int(mixed.sum() - ok.sum()))
+
+
+def cells_in_regions(rg: Regions, labels: tuple[int, ...]) -> np.ndarray:
+    """Cells of every region whose signature is exactly `labels`."""
+    ids = [r for r, t in enumerate(rg.signature) if t == tuple(sorted(labels))]
+    return np.flatnonzero(np.isin(rg.region, ids))
 
 
 # ---- cross-model comparison ---------------------------------------------------------------------
@@ -327,12 +404,15 @@ def run(cfg: dict, label: str, tau: float = 0.1, max_size: int = 3, normalize: b
 # ---- web export -----------------------------------------------------------------------------------
 
 EXPORT_FILE = "fuzzy_memberships.bin.gz"
+REGIONS_FILE = "fuzzy_regions.bin.gz"
 
 
-def export_payload(cfg: dict, obs: pd.DataFrame, models: pd.DataFrame) -> tuple[bytes, dict, dict] | None:
-    """Gzipped uint8 neighbour-label counts [model, cell, level] (levels of all label columns concatenated;
-    P = count / (k+1), lossless) for the browser, plus its manifest.files entry and manifest.fuzzy_upset block.
-    Returns None when the config has no fuzzy_upset block."""
+def export_payload(cfg: dict, obs: pd.DataFrame, models: pd.DataFrame) -> tuple[dict, dict] | None:
+    """Browser files for the fuzzy UpSet: gzipped uint8 neighbour-label counts [model, cell, level] (levels of all
+    label columns concatenated; P = count / (k+1), lossless) and gzipped int16 mixed-region ids [tau, column,
+    model, cell] (regions need the kNN graph, which the browser does not have).
+    Returns ({file name: (bytes, manifest.files entry)}, manifest.fuzzy_upset block), or None when the config has
+    no fuzzy_upset block."""
     import gzip
     fc = cfg.get("fuzzy_upset")
     if not fc:
@@ -357,10 +437,18 @@ def export_payload(cfg: dict, obs: pd.DataFrame, models: pd.DataFrame) -> tuple[
                      "n_unlabelled": int((codes < 0).sum()), "warnings": label_warnings(codes, levels)})
         off += len(levels)
     N = len(obs)
+    taus = [float(t) for t in fc.get("region_taus", [0.1, 0.2, 0.3])]
+    min_size = int(fc.get("region_min_size", 5))
     arr = np.empty((len(ids), N, off), np.uint8)
+    reg = np.full((len(taus), len(enc), len(ids), N), -1, np.int16)
     for j, mid in enumerate(ids):
         nb = np.asarray(knn[order[mid], :, :k])
-        arr[j] = np.concatenate([membership_counts(nb, codes, L) for codes, L in enc], axis=1)
+        counts = [membership_counts(nb, codes, L) for codes, L in enc]
+        arr[j] = np.concatenate(counts, axis=1)
+        for c, C in enumerate(counts):
+            P = (sp.csr_matrix(C, dtype=np.float32) / np.float32(k + 1)).tocsr()
+            for t, tau in enumerate(taus):
+                reg[t, c, j] = region_ids(nb, mixed_cells(P, tau)[0], min_size)
     raw = arr.tobytes()
     gz = gzip.compress(raw, compresslevel=9, mtime=0)
     file_entry = {"dtype": "uint8", "shape": list(arr.shape), "encoding": "gzip", "raw_bytes": len(raw),
@@ -368,11 +456,19 @@ def export_payload(cfg: dict, obs: pd.DataFrame, models: pd.DataFrame) -> tuple[
                                  f"membership P = count/{k + 1}. Levels of all label columns concatenated "
                                  f"(manifest.fuzzy_upset.columns[].offset). Gzip-compressed.",
                   "order": "[model, cell, level], model order = manifest.fuzzy_upset.models"}
+    rraw = reg.astype("<i2").tobytes()
+    rgz = gzip.compress(rraw, compresslevel=9, mtime=0)
+    reg_entry = {"dtype": "int16", "shape": list(reg.shape), "encoding": "gzip", "raw_bytes": len(rraw),
+                 "description": f"fuzzy UpSet mixed regions: connected components (>= {min_size} cells) of mixed cells "
+                                f"(>= 2 labels with membership >= tau) in each model's kNN graph; region id, -1 = none. "
+                                f"Raw memberships only (no enrichment). Gzip-compressed.",
+                 "order": "[tau, label column, model, cell]; tau order = manifest.fuzzy_upset.regions.taus"}
     info = {"file": EXPORT_FILE, "k": k, "models": ids, "columns": cols, "n_levels": off,
             "second_columns": fc.get("second_columns", fc["label_columns"]), "second_default": fc.get("second_default"),
             "qc_columns": fc.get("qc_columns", []),
+            "regions": {"file": REGIONS_FILE, "taus": taus, "min_size": min_size},
             "defaults": {"tau": fc.get("tau", 0.1), "max_size": fc.get("max_size", 3), "normalize": False, "hide_pure": True}}
-    return gz, file_entry, info
+    return {EXPORT_FILE: (gz, file_entry), REGIONS_FILE: (rgz, reg_entry)}, info
 
 
 def patch_export(cfg: dict) -> None:
@@ -385,17 +481,18 @@ def patch_export(cfg: dict) -> None:
         raise FileNotFoundError(f"{mf} not found; run `make export` first.")
     manifest = json.loads(mf.read_text())
     obs = ad.read_h5ad(p(cfg, "data"), backed="r").obs
-    gz, entry, info = export_payload(cfg, obs, pd.read_csv(out_dir(cfg) / "models.csv"))
-    (ex / EXPORT_FILE).write_bytes(gz)
-    entry["bytes"] = len(gz)
+    out, info = export_payload(cfg, obs, pd.read_csv(out_dir(cfg) / "models.csv"))
     files = {k: v for k, v in manifest["files"].items() if k != "manifest.json"}
-    files[EXPORT_FILE] = entry
+    for name, (gz, entry) in out.items():
+        (ex / name).write_bytes(gz)
+        entry["bytes"] = len(gz)
+        files[name] = entry
+        log.info(f"wrote {name}: {len(gz) / 1e6:.2f} MB gzipped ({entry['raw_bytes'] / 1e6:.2f} MB raw)")
     manifest.update(schema_version=export.SCHEMA_VERSION, fuzzy_upset=info, files=files)
     mf.write_text(json.dumps(manifest, indent=1))
     files["manifest.json"] = {"bytes": mf.stat().st_size, "dtype": "json", "description": "this index"}
     (ex / "README.md").write_text(export.readme(manifest, files))
-    log.info(f"wrote {EXPORT_FILE}: {len(gz) / 1e6:.2f} MB gzipped ({entry['raw_bytes'] / 1e6:.2f} MB raw), "
-             f"{len(info['models'])} models x {len(info['columns'])} label columns")
+    log.info(f"{len(info['models'])} models x {len(info['columns'])} label columns")
 
 
 def main():
