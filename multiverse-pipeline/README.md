@@ -113,8 +113,8 @@ Everything that depends on a selection is computed in the browser:
 
 | view | what it shows |
 |---|---|
-| V0a model map | UMAP (precomputed A, n_neighbors=10) or classical MDS of all models. The colour dropdown covers every metric (raw or scaled), the aggregates, every factor, consensus share, mean Δ, and fraction \|z\|>2 vs the reference. Seed replicates are joined by thin outlines. Hover, click, shift-click and lasso. |
-| V0b leaderboard | Top 10 for the selected metric: sortable table with seed sd and an "≈1" marker when within noise of rank 1, or a D3 funky heatmap (setup / overall / batch / bio; bars and circles) |
+| V0a model map | UMAP (precomputed A, n_neighbors=10), t-SNE (precomputed A, perplexity 15) or classical MDS of all models. The colour dropdown offers only multiverse measures (consensus share, mean Δ, fraction \|z\|>2 vs the reference) and decisions (every factor + seed). Seed replicates are joined by thin outlines. Hover, click, shift-click and lasso. |
+| V0b leaderboard | Top 10 for the benchmark metric chosen in its own **Rank by** dropdown (aggregates, raw or scaled metrics): sortable table with seed sd and an "≈1" marker when within noise of rank 1, or a D3 funky heatmap (setup / overall / batch / bio; bars and circles) |
 | V1 fixed cell map | UMAP of the consensus kNN graph on canvas (hex-binned density from 50,000 cells), coloured by any obs, QC, measure, region or z; quadtree hover, lasso, pan/zoom, click-to-highlight legend |
 | V2 stability map | all-model vs seed-only consensus stability side by side |
 | V3 agreement matrix | A(a,b) in factor order with factor strips; click selects both models |
@@ -163,7 +163,7 @@ run in CI because the data is committed.
 
 ## Browser checks
 
-`browser-checks/check.mjs` (Playwright, 36 checks) covers:
+`browser-checks/check.mjs` (Playwright, 41 checks) covers:
 
 - no console errors,
 - every view renders,
@@ -316,8 +316,8 @@ Modelling choices made while implementing the brief. Runtime fallbacks are also 
 
 **Layouts and dashboard**
 
-36. The model map uses UMAP (precomputed A, n_neighbors = 10, random init, fixed seed) or classical
-    MDS. The cell map is a UMAP of the binary symmetrised consensus graph via `scanpy.tl.umap`.
+36. The model map uses UMAP (precomputed A, n_neighbors = 10, random init, fixed seed), t-SNE
+    (precomputed A, perplexity 15, random init, fixed seed) or classical MDS. The cell map is a UMAP of the binary symmetrised consensus graph via `scanpy.tl.umap`.
     Both are used only for location; no measure reads 2D coordinates.
 37. Colours use the validated reference palette (light and dark steps).
     - Factors have ≤ 3 levels, within the 3-slot all-pairs-safe set.

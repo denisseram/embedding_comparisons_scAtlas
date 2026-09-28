@@ -1,11 +1,13 @@
-// V0b — Leaderboard: top 10 models for the metric selected in the V0a colour dropdown,
-// as a sortable table or a model-level funky heatmap. Seed-replicate sd is shown throughout.
+// V0b — Leaderboard: top 10 models for the benchmark metric chosen in its own "Rank by" dropdown
+// (the V0a colour dropdown only offers multiverse measures and decisions), as a sortable table or
+// a model-level funky heatmap. Seed-replicate sd is shown throughout.
 import { useMemo, useState } from 'react';
 import { useData } from '../data/DataContext';
 import { useSelection } from '../state';
 import { fmt } from '../d3/colors';
 import type { Model } from '../data/loader';
 import FunkyHeatmap from './FunkyHeatmap';
+import { rankOptions } from './modelColor';
 
 export interface LeaderMetric {
   key: string;
@@ -28,11 +30,14 @@ const FACTOR_COLS = ['method', 'batch_key', 'n_hvg', 'hvg_batch_aware', 'exclude
 
 export default function Leaderboard() {
   const { entry } = useData();
-  const { models } = entry;
+  const { models, manifest } = entry;
   const { state, dispatch } = useSelection();
   const [view, setView] = useState<'table' | 'funky'>('table');
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'rank', dir: 1 });
-  const metric = leaderMetric(state.colorBy);
+  const [rankBy, setRankBy] = useState('agg:overall');
+  const opts = useMemo(() => rankOptions(manifest), [manifest]);
+  const groups = useMemo(() => Array.from(new Set(opts.map((o) => o.group))), [opts]);
+  const metric = leaderMetric(rankBy);
 
   const top = useMemo(() => {
     const ranked = [...models].sort((a, b) => metric.value(b) - metric.value(a)).slice(0, 10);
@@ -71,10 +76,27 @@ export default function Leaderboard() {
   return (
     <div className="mv-leaderboard">
       <div className="mv-toolbar">
-        <span>
-          Top 10 by <strong>{metric.label}</strong>
-          {metric.fallback && <span className="mv-muted"> (colour key is not a benchmark metric; ranking by overall)</span>}
-        </span>
+        <div className="mv-inline">
+          <label>
+            Rank by
+            <select value={rankBy} onChange={(e) => setRankBy(e.target.value)}>
+              {groups.map((g) => (
+                <optgroup key={g} label={g}>
+                  {opts
+                    .filter((o) => o.group === g)
+                    .map((o) => (
+                      <option key={o.key} value={o.key}>
+                        {o.label}
+                      </option>
+                    ))}
+                </optgroup>
+              ))}
+            </select>
+          </label>
+          <span>
+            Top 10 by <strong>{metric.label}</strong>
+          </span>
+        </div>
         <div className="mv-seg" role="group" aria-label="Leaderboard view">
           <button type="button" aria-pressed={view === 'table'} onClick={() => setView('table')}>Table</button>
           <button type="button" aria-pressed={view === 'funky'} onClick={() => setView('funky')}>Funky heatmap</button>

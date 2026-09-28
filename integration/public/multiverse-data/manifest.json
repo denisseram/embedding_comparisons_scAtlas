@@ -1,6 +1,6 @@
 {
- "schema_version": "1.0.0",
- "generated_at": "2026-09-27T15:24:26+00:00",
+ "schema_version": "1.1.0",
+ "generated_at": "2026-09-28T07:25:48+00:00",
  "dataset": {
   "name": "toy",
   "n_cells": 5000,
@@ -1753,7 +1753,7 @@
   "models.json": {
    "dtype": "json",
    "description": "Per-model factor levels, metrics (raw/scaled), aggregates, seed-replicate sd, 2D model-map coordinates per measure mode, summary measures. Order = manifest.model_order.",
-   "bytes": 361673
+   "bytes": 368274
   },
   "agreement.bin": {
    "dtype": "float32",

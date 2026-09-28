@@ -8,7 +8,20 @@ export interface ColorOption {
   group: string;
 }
 
+/** Model-map (V0a) colour options: multiverse measures and decisions only. */
 export function colorOptions(manifest: Manifest): ColorOption[] {
+  const out: ColorOption[] = [
+    { key: 'mv:consensus_share', label: 'mean consensus stability (share of consensus neighbours)', group: 'Multiverse measures' },
+    { key: 'mv:mean_agreement', label: 'mean Δ to all other models', group: 'Multiverse measures' },
+    { key: 'mv:frac_z', label: 'fraction of cells with |z| > 2 vs reference', group: 'Multiverse measures' },
+  ];
+  for (const f of manifest.factors) out.push({ key: `factor:${f.name}`, label: f.name, group: 'Decisions' });
+  out.push({ key: 'factor:seed', label: 'seed', group: 'Decisions' });
+  return out;
+}
+
+/** Leaderboard (V0b) ranking options: benchmark aggregates and individual metrics. */
+export function rankOptions(manifest: Manifest): ColorOption[] {
   const out: ColorOption[] = [
     { key: 'agg:overall', label: 'overall', group: 'Benchmark aggregates' },
     { key: 'agg:bio', label: 'bio', group: 'Benchmark aggregates' },
@@ -16,11 +29,6 @@ export function colorOptions(manifest: Manifest): ColorOption[] {
   ];
   for (const m of manifest.metrics) out.push({ key: `raw:${m.name}`, label: `${m.name} (raw, ${m.group})`, group: 'Metrics (raw)' });
   for (const m of manifest.metrics) out.push({ key: `scaled:${m.name}`, label: `${m.name} (scaled, ${m.group})`, group: 'Metrics (scaled)' });
-  for (const f of manifest.factors) out.push({ key: `factor:${f.name}`, label: f.name, group: 'Decisions' });
-  out.push({ key: 'factor:seed', label: 'seed', group: 'Decisions' });
-  out.push({ key: 'mv:consensus_share', label: 'mean consensus stability (share of consensus neighbours)', group: 'Multiverse measures' });
-  out.push({ key: 'mv:mean_agreement', label: 'mean Δ to all other models', group: 'Multiverse measures' });
-  out.push({ key: 'mv:frac_z', label: 'fraction of cells with |z| > 2 vs reference', group: 'Multiverse measures' });
   return out;
 }
 

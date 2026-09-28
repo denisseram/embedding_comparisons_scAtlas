@@ -23,7 +23,7 @@ from pipeline.integrate import FACTORS
 
 log = get_logger("export")
 warnings.filterwarnings("ignore")
-SCHEMA_VERSION = "1.0.0"
+SCHEMA_VERSION = "1.1.0"  # 1.1: models.json layout gains "tsne"
 
 
 def classical_mds(D: np.ndarray, dim: int = 2) -> np.ndarray:
@@ -39,6 +39,13 @@ def model_umap(D: np.ndarray, n_neighbors: int, seed: int) -> np.ndarray:
     import umap
     reducer = umap.UMAP(metric="precomputed", n_neighbors=n_neighbors, random_state=seed, init="random")
     return reducer.fit_transform(D.astype(np.float64)).astype(np.float32)
+
+
+def model_tsne(D: np.ndarray, perplexity: float, seed: int) -> np.ndarray:
+    from sklearn.manifold import TSNE
+    perp = min(perplexity, (D.shape[0] - 1) / 3)  # t-SNE requires perplexity < n_samples
+    tsne = TSNE(n_components=2, metric="precomputed", init="random", perplexity=perp, random_state=seed)
+    return tsne.fit_transform(D.astype(np.float64)).astype(np.float32)
 
 
 def cell_map(cons: np.ndarray, seed: int) -> np.ndarray:
@@ -98,6 +105,7 @@ def main(cfg: dict | None = None) -> dict:
     # ---- layouts --------------------------------------------------------------------------
     agreement = {m: np.load(md / f"agreement{sfx[m]}.npy") for m in modes}
     layouts = {m: {"umap": model_umap(agreement[m], cfg["layouts"]["model_umap_n_neighbors"], gs),
+                   "tsne": model_tsne(agreement[m], cfg["layouts"].get("model_tsne_perplexity", 15), gs),
                    "mds": classical_mds(agreement[m])} for m in modes}
     cons = np.load(md / "consensus_knn.npy")
     xy = cell_map(cons, gs)
@@ -120,6 +128,7 @@ def main(cfg: dict | None = None) -> dict:
             "seed_sd": {**{n: rnd(sd[n], 5) for n in names}, **{f"{n}_scaled": rnd(sd[f"{n}_scaled"], 5) for n in names},
                         "overall": rnd(sd.overall, 5), "bio": rnd(sd.bio, 5), "batch": rnd(sd.batch, 5)},
             "layout": {m: {"umap": [rnd(v, 3) for v in layouts[m]["umap"][i]],
+                           "tsne": [rnd(v, 3) for v in layouts[m]["tsne"][i]],
                            "mds": [rnd(v, 4) for v in layouts[m]["mds"][i]]} for m in modes},
             "summary": {"consensus_share": rnd(share[i], 5),
                         **{f"mean_agreement_delta_{m}": rnd(np.delete(agreement[m][i], i).mean()) for m in modes}},

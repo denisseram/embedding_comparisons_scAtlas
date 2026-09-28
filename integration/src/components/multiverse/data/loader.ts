@@ -55,7 +55,7 @@ export interface Model {
   bio: number;
   batch: number;
   seed_sd: Record<string, number>;
-  layout: Record<string, { umap: [number, number]; mds: [number, number] }>;
+  layout: Record<string, { umap: [number, number]; tsne: [number, number]; mds: [number, number] }>;
   summary: Record<string, number>;
 }
 

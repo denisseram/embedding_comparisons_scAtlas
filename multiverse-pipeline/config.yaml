@@ -89,6 +89,7 @@ variants:
 
 layouts:
   model_umap_n_neighbors: 10
+  model_tsne_perplexity: 15     # t-SNE of models on precomputed A(a,b); capped below n_models/3
 
 export:
   n_reference_models: 3         # top-overall + best-bio + best-batch (deduplicated)

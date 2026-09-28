@@ -1,7 +1,7 @@
 // Shared selection state for all linked views (React context + reducer; the site has no store library).
 import { createContext, useContext, useReducer, type Dispatch, type ReactNode } from 'react';
 
-export type LayoutKind = 'umap' | 'mds';
+export type LayoutKind = 'umap' | 'tsne' | 'mds';
 
 export interface SelectionState {
   selectedModels: Set<string>;

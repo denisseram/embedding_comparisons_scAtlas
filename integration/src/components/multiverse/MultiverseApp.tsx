@@ -43,7 +43,7 @@ export default function MultiverseApp() {
     selectedModels: new Set(),
     selectedCells: null,
     selectedRegion: null,
-    colorBy: 'agg:overall',
+    colorBy: 'factor:method',
     cellColorBy: 'cat:planted_effect',
     layout: 'umap',
     referenceModel: m.references[0],
@@ -120,6 +120,7 @@ function Shell() {
           Layout
           <select value={state.layout} onChange={(e) => dispatch({ type: 'set', key: 'layout', value: e.target.value })}>
             <option value="umap">UMAP (precomputed A, n_neighbors=10)</option>
+            <option value="tsne">t-SNE (precomputed A, perplexity 15)</option>
             <option value="mds">Classical MDS</option>
           </select>
         </label>
@@ -148,6 +149,17 @@ function Shell() {
           VALIDATION.md.
         </p>
       )}
+      <details className="mv-explainer">
+        <summary>What does “Measure” mean?</summary>
+        <p>
+          Every multiverse view compares two models cell by cell: for a cell, take its 15 nearest neighbours in each model's own latent space and ask how
+          different they are. <strong>Neighbour identity</strong> (the pre-registered measure) uses Δ = 1 − Jaccard of the two neighbour sets: 0 when the
+          cell has exactly the same neighbours, 1 when it shares none. <strong>Neighbour composition</strong> (exploratory) first maps every neighbour to
+          one of ~66 small clusters of the consensus graph and compares <em>which clusters</em> the neighbours come from, so reshuffling among
+          equivalent cells of the same population no longer counts as change. The choice changes Δ, and with it the agreement matrix, the model
+          map layout, E/H, regions, variants and the lattice.
+        </p>
+      </details>
 
       <nav className="mv-tabs" role="tablist" aria-label="Views">
         {(

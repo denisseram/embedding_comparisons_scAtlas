@@ -27,20 +27,31 @@ check('V3 canvas drawn', await page.evaluate(() => { const c = document.querySel
 
 // dropdown recolour + leaderboard update
 const before = await circles();
-const lbBefore = await page.locator('.mv-leaderboard tbody tr').first().innerText();
 const colorSel = page.getByLabel('Colour models by');
-let ms = await timed(() => colorSel.selectOption('raw:ARI'), () => document.querySelector('.mv-leaderboard strong')?.textContent?.includes('ARI'));
+const colorKeys = await colorSel.locator('option').evaluateAll((os) => os.map((o) => o.value));
+check('colour dropdown offers only multiverse measures + decisions', colorKeys.every((k) => k.startsWith('mv:') || k.startsWith('factor:')), colorKeys.join(','));
+let ms = await timed(() => colorSel.selectOption('mv:consensus_share'), () => document.querySelector('section[aria-labelledby=v0a] .mv-legend-title')?.textContent?.includes('consensus'));
 const after = await circles();
-const lbAfter = await page.locator('.mv-leaderboard tbody tr').first().innerText();
 check('dropdown recolours V0a', before !== after);
-check('dropdown updates V0b', lbBefore !== lbAfter || (await page.locator('.mv-leaderboard').innerText()).includes('ARI (raw)'), `${ms} ms`);
-results.push({ name: 'timing: recolour (select → leaderboard updated)', ok: ms < 200, detail: `${ms} ms` });
-ms = await timed(() => colorSel.selectOption('factor:method'), () => document.querySelectorAll('.mv-swatches li').length >= 3);
+results.push({ name: 'timing: recolour V0a', ok: ms < 200, detail: `${ms} ms` });
+const lbBefore = await page.locator('.mv-leaderboard tbody tr').first().innerText();
+ms = await timed(() => page.getByLabel('Rank by').selectOption('raw:ARI'), () => document.querySelector('.mv-leaderboard strong')?.textContent?.includes('ARI'));
+const lbAfter = await page.locator('.mv-leaderboard tbody tr').first().innerText();
+check('Rank by updates V0b', lbBefore !== lbAfter || (await page.locator('.mv-leaderboard').innerText()).includes('ARI (raw)'), `${ms} ms`);
+results.push({ name: 'timing: leaderboard re-rank', ok: ms < 200, detail: `${ms} ms` });
+ms = await timed(() => colorSel.selectOption('factor:batch_key'), () => document.querySelectorAll('section[aria-labelledby=v0a] .mv-swatches li').length >= 2);
 check('categorical colour + legend', true, `${ms} ms`);
+const pos = () => page.evaluate(() => [...document.querySelectorAll('section[aria-labelledby=v0a] svg circle')].slice(0, 5).map((c) => c.getAttribute('cx')).join());
+for (const lay of ['tsne', 'mds', 'umap']) {
+  const p0 = await pos();
+  await page.getByLabel('Layout').selectOption(lay);
+  await page.waitForTimeout(50);
+  check(`layout ${lay} moves models`, (await pos()) !== p0);
+}
 await colorSel.selectOption('mv:frac_z');
 await page.waitForFunction(() => !document.body.innerText.includes('loading calibrated change'), null, { timeout: 15000 });
 check('frac |z|>2 colour loads z and recolours', (await circles()) !== after);
-await colorSel.selectOption('agg:overall');
+await colorSel.selectOption('factor:method');
 await page.getByRole('button', { name: 'Funky heatmap' }).click();
 check('funky heatmap renders', await page.locator('.mv-leaderboard svg circle').count() > 50);
 await page.getByRole('button', { name: 'Table', exact: true }).click();
