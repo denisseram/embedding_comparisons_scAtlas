@@ -8,7 +8,7 @@ export interface ColorOption {
   group: string;
 }
 
-/** Model-map (V0a) colour options: multiverse measures and decisions only. */
+/** Model-map (V0a) colour options: multiverse measures, decisions, and every benchmark metric. */
 export function colorOptions(manifest: Manifest): ColorOption[] {
   const out: ColorOption[] = [
     { key: 'mv:consensus_share', label: 'mean consensus stability (share of consensus neighbours)', group: 'Multiverse measures' },
@@ -17,7 +17,7 @@ export function colorOptions(manifest: Manifest): ColorOption[] {
   ];
   for (const f of manifest.factors) out.push({ key: `factor:${f.name}`, label: f.name, group: 'Decisions' });
   out.push({ key: 'factor:seed', label: 'seed', group: 'Decisions' });
-  return out;
+  return [...out, ...rankOptions(manifest)];
 }
 
 /** Leaderboard (V0b) ranking options: benchmark aggregates and individual metrics. */

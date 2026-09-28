@@ -29,7 +29,11 @@ check('V3 canvas drawn', await page.evaluate(() => { const c = document.querySel
 const before = await circles();
 const colorSel = page.getByLabel('Colour models by');
 const colorKeys = await colorSel.locator('option').evaluateAll((os) => os.map((o) => o.value));
-check('colour dropdown offers only multiverse measures + decisions', colorKeys.every((k) => k.startsWith('mv:') || k.startsWith('factor:')), colorKeys.join(','));
+const nMetrics = await page.evaluate(async () => (await (await fetch(new URL('../multiverse-data/manifest.json', location.href))).json()).metrics.length);
+const hasAll = ['mv:', 'factor:', 'agg:', 'raw:', 'scaled:'].every((p) => colorKeys.some((k) => k.startsWith(p)));
+check('colour dropdown offers multiverse measures, decisions and all metrics', hasAll && colorKeys.filter((k) => k.startsWith('raw:')).length === nMetrics && colorKeys.filter((k) => k.startsWith('scaled:')).length === nMetrics, `${colorKeys.length} options, ${nMetrics} metrics`);
+const msMetric = await timed(() => colorSel.selectOption('raw:graph_iLISI'), () => document.querySelector('section[aria-labelledby=v0a] .mv-legend-title')?.textContent?.includes('graph_iLISI'));
+check('metric colour recolours V0a', true, `${msMetric} ms`);
 let ms = await timed(() => colorSel.selectOption('mv:consensus_share'), () => document.querySelector('section[aria-labelledby=v0a] .mv-legend-title')?.textContent?.includes('consensus'));
 const after = await circles();
 check('dropdown recolours V0a', before !== after);

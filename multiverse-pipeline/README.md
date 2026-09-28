@@ -115,7 +115,7 @@ Everything that depends on a selection is computed in the browser:
 
 | view | what it shows |
 |---|---|
-| V0a model map | UMAP (precomputed A, n_neighbors=10), t-SNE (precomputed A, perplexity 15) or classical MDS of all models. The colour dropdown offers only multiverse measures (consensus share, mean Δ, fraction \|z\|>2 vs the reference) and decisions (every factor + seed). Seed replicates are joined by thin outlines. Hover, click, shift-click and lasso. |
+| V0a model map | UMAP (precomputed A, n_neighbors=10), t-SNE (precomputed A, perplexity 15) or classical MDS of all models. The colour dropdown offers multiverse measures (consensus share, mean Δ, fraction \|z\|>2 vs the reference), decisions (every factor + seed) and every benchmark metric (overall / bio / batch, each metric raw and scaled). Seed replicates are joined by thin outlines. Hover, click, shift-click and lasso. |
 | V0b leaderboard | Top 10 for the benchmark metric chosen in its own **Rank by** dropdown (aggregates, raw or scaled metrics): sortable table with seed sd and an "≈1" marker when within noise of rank 1, or a D3 funky heatmap (setup / overall / batch / bio; bars and circles) |
 | Embeddings tab | the standard UMAP of **each** embedding (scanpy `pp.neighbors` on that model's latent + `tl.umap`), up to 4 side by side, coloured by sample / study / cell type / QC / any measure, with each model's iLISI, kBET, PCR, ARI and NMI. Defaults to the reference model and its counterparts with the other methods (same features and seed). Lasso selects cells everywhere. For checking integrations visually. |
 | V1 fixed cell map | UMAP of the consensus kNN graph on canvas (hex-binned density from 50,000 cells), coloured by any obs, QC, measure, region or z; quadtree hover, lasso, pan/zoom, click-to-highlight legend |
@@ -195,7 +195,7 @@ run in CI because the data is committed.
 
 ## Browser checks
 
-`browser-checks/check.mjs` (Playwright, 44 checks) covers:
+`browser-checks/check.mjs` (Playwright, 45 checks) covers:
 
 - no console errors,
 - every view renders,
