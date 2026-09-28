@@ -7,7 +7,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useData } from '../data/DataContext';
 import { useSelection } from '../state';
 import { INK, categorical, fmt, sequential, useTheme } from '../d3/colors';
-import { Colorbar, Swatches } from '../d3/Legend';
+import { Swatches } from '../d3/Legend';
 import { Tooltip, type Tip } from '../d3/Tooltip';
 import { loadFuzzy, loadModelUmaps, modelUmap, type ModelUmaps } from '../data/loader';
 import {
@@ -28,6 +28,39 @@ const BAR_H = 120;
 const DOT_ROW = 16;
 const ATTR_ROW = 14;
 const MAX_COLS = 60;
+
+/** Funky-heatmap glyph for a fuzzy size: area grows with the value, and the shape goes from a small circle
+ * (small values) to a full square (the largest value in the view). null for 0. */
+function fuzzyGlyph(v: number, max: number, box: number): { s: number; r: number } | null {
+  if (!(v > 0) || !(max > 0)) return null;
+  const t = Math.min(1, v / max);
+  const s = 2.5 + (box - 2.5) * Math.sqrt(t);
+  return { s, r: (s / 2) * (1 - t) };
+}
+
+function GlyphLegend({ max, color }: { max: number; color: (v: number) => string }) {
+  const steps = [0.03, 0.2, 0.5, 1].map((t) => t * max);
+  const box = 16;
+  return (
+    <svg width={4 * 46 + 10} height={46} role="img" aria-label={`Glyph size and colour for fuzzy size, 0 to ${max.toFixed(0)}`}>
+      <text className="mv-legend-title" x={4} y={11}>
+        glyph: fuzzy size (area and colour)
+      </text>
+      {steps.map((v, i) => {
+        const g = fuzzyGlyph(v, max, box)!;
+        const cx = 16 + i * 46;
+        return (
+          <g key={i}>
+            <rect x={cx - g.s / 2} y={24 - g.s / 2} width={g.s} height={g.s} rx={g.r} fill={color(v)} />
+            <text className="mv-fh-col" x={cx} y={43} textAnchor="middle">
+              {v >= 10 ? Math.round(v) : v.toFixed(1)}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
 
 let countsCache: Promise<Uint8Array | null> | null = null;
 let umapCache: Promise<ModelUmaps | null> | null = null;
@@ -187,7 +220,7 @@ function UpsetPanel({ info, counts, umaps }: { info: FuzzyInfo; counts: Uint8Arr
   // ---- SVG ----------------------------------------------------------------------------------------------
   const ref = useRef<SVGSVGElement>(null);
   const R = rowsModels.length;
-  const heatRow = R > 12 ? 8 : 14;
+  const heatRow = R > 12 ? 12 : 18;
   const L = col.levels.length;
   const yBars = 10;
   const yHeat = yBars + BAR_H + 8;
@@ -210,7 +243,7 @@ function UpsetPanel({ info, counts, umaps }: { info: FuzzyInfo; counts: Uint8Arr
     rowsModels.forEach((id, j) => {
       const t = lab(yHeat + j * heatRow + heatRow - 3, (j === 0 ? '▶ ' : '') + short(id), 'mv-fh-col');
       if (j === 0) t.style('font-weight', '700');
-      if (heatRow < 10) t.style('font-size', '8px');
+      if (heatRow < 14) t.style('font-size', '9px');
     });
     col.levels.forEach((lv, l) => {
       if (l % 2 === 0)
@@ -238,7 +271,7 @@ function UpsetPanel({ info, counts, umaps }: { info: FuzzyInfo; counts: Uint8Arr
           .attr('d', `M${cx - bw / 2},${yBars + BAR_H}V${top + r}q0,${-r} ${r},${-r}H${cx + bw / 2 - r}q${r},0 ${r},${r}V${yBars + BAR_H}Z`)
           .attr('fill', barColor);
       }
-      // heatmap strip: one cell per compared model (2px surface gap)
+      // strip: one funky-heatmap glyph per compared model on a faint tile (the tile is the hit target)
       rowsModels.forEach((id, j) => {
         g.append('rect')
           .attr('x', x + 1)
@@ -246,7 +279,8 @@ function UpsetPanel({ info, counts, umaps }: { info: FuzzyInfo; counts: Uint8Arr
           .attr('width', COL - 2)
           .attr('height', heatRow - 2)
           .attr('rx', 2)
-          .attr('fill', it.fuzzy[j] > 0 ? heat(it.fuzzy[j]) : ink.grid)
+          .attr('fill', ink.mid)
+          .attr('opacity', 0.7)
           .on('click', (ev: MouseEvent) => {
             ev.stopPropagation();
             select(it, j);
@@ -266,6 +300,19 @@ function UpsetPanel({ info, counts, umaps }: { info: FuzzyInfo; counts: Uint8Arr
             });
           })
           .on('pointerleave', () => setTip(null));
+      });
+      rowsModels.forEach((_, j) => {
+        const v = it.fuzzy[j];
+        const glyph = fuzzyGlyph(v, maxFuzzy, Math.min(COL, heatRow) - 2);
+        if (!glyph) return;
+        g.append('rect')
+          .attr('x', cx - glyph.s / 2)
+          .attr('y', yHeat + j * heatRow + heatRow / 2 - glyph.s / 2)
+          .attr('width', glyph.s)
+          .attr('height', glyph.s)
+          .attr('rx', glyph.r)
+          .attr('fill', heat(v))
+          .style('pointer-events', 'none');
       });
       // dot matrix
       const member = new Set(it.labels);
@@ -463,7 +510,7 @@ function UpsetPanel({ info, counts, umaps }: { info: FuzzyInfo; counts: Uint8Arr
           )}
         </div>
         <div className="mv-legend-row">
-          <Colorbar color={heat} domain={[0, maxFuzzy]} label="fuzzy size (heatmap strip)" width={220} />
+          <GlyphLegend max={maxFuzzy} color={heat} />
           {secondCol && <Swatches items={secondCol.levels.map((l) => ({ key: l, label: l, color: compColor(l) }))} />}
           <span className="mv-small mv-muted">QC rows: darker = higher mean among the shown intersections (exact values on hover).</span>
         </div>
