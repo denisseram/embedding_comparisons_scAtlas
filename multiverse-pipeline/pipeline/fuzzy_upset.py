@@ -14,6 +14,7 @@ the threshold/aggregation step (integration/.../compute/fuzzyUpset.ts) on export
 is the reference implementation and the offline / large-scale path.
 
 CLI:  python -m pipeline.fuzzy_upset --label cell_type [--tau 0.1 --max-size 3 --normalize --models seed0]
+      python -m pipeline.fuzzy_upset --export      # add the browser file to an existing web export
 """
 from __future__ import annotations
 
@@ -323,10 +324,85 @@ def run(cfg: dict, label: str, tau: float = 0.1, max_size: int = 3, normalize: b
     return _tables(per, levels, warn)
 
 
+# ---- web export -----------------------------------------------------------------------------------
+
+EXPORT_FILE = "fuzzy_memberships.bin.gz"
+
+
+def export_payload(cfg: dict, obs: pd.DataFrame, models: pd.DataFrame) -> tuple[bytes, dict, dict] | None:
+    """Gzipped uint8 neighbour-label counts [model, cell, level] (levels of all label columns concatenated;
+    P = count / (k+1), lossless) for the browser, plus its manifest.files entry and manifest.fuzzy_upset block.
+    Returns None when the config has no fuzzy_upset block."""
+    import gzip
+    fc = cfg.get("fuzzy_upset")
+    if not fc:
+        return None
+    k = fc.get("k", cfg["measures"]["k"])
+    missing = [c for c in fc["label_columns"] + fc.get("qc_columns", []) if c not in obs.columns]
+    if missing:
+        raise KeyError(f"fuzzy_upset config names obs columns that do not exist: {missing}")
+    ids = select_models(models, fc.get("models", "seed0"))
+    knn_path = out_dir(cfg) / "knn50.npy"
+    if not knn_path.exists():
+        raise FileNotFoundError(f"{knn_path} not found; run the kNN step first.")
+    knn = np.load(knn_path, mmap_mode="r")
+    if k + 1 > 255 or k > knn.shape[2]:
+        raise ValueError(f"fuzzy_upset.k={k} must be <= {min(254, knn.shape[2])}.")
+    order = {m: i for i, m in enumerate(models.model_id)}
+    cols, enc, off = [], [], 0
+    for c in fc["label_columns"]:
+        codes, levels = label_codes(obs[c].to_numpy(object))
+        enc.append((codes, len(levels)))
+        cols.append({"name": c, "levels": levels, "offset": off, "freq": [round(float(x), 6) for x in label_frequency(codes, len(levels))],
+                     "n_unlabelled": int((codes < 0).sum()), "warnings": label_warnings(codes, levels)})
+        off += len(levels)
+    N = len(obs)
+    arr = np.empty((len(ids), N, off), np.uint8)
+    for j, mid in enumerate(ids):
+        nb = np.asarray(knn[order[mid], :, :k])
+        arr[j] = np.concatenate([membership_counts(nb, codes, L) for codes, L in enc], axis=1)
+    raw = arr.tobytes()
+    gz = gzip.compress(raw, compresslevel=9, mtime=0)
+    file_entry = {"dtype": "uint8", "shape": list(arr.shape), "encoding": "gzip", "raw_bytes": len(raw),
+                  "description": f"fuzzy UpSet: neighbour label counts (self included) in each model's directed k={k} kNN graph; "
+                                 f"membership P = count/{k + 1}. Levels of all label columns concatenated "
+                                 f"(manifest.fuzzy_upset.columns[].offset). Gzip-compressed.",
+                  "order": "[model, cell, level], model order = manifest.fuzzy_upset.models"}
+    info = {"file": EXPORT_FILE, "k": k, "models": ids, "columns": cols, "n_levels": off,
+            "second_columns": fc.get("second_columns", fc["label_columns"]), "second_default": fc.get("second_default"),
+            "qc_columns": fc.get("qc_columns", []),
+            "defaults": {"tau": fc.get("tau", 0.1), "max_size": fc.get("max_size", 3), "normalize": False, "hide_pure": True}}
+    return gz, file_entry, info
+
+
+def patch_export(cfg: dict) -> None:
+    """Add / refresh only the fuzzy UpSet file in an existing web export (no other export file is rewritten)."""
+    import anndata as ad
+    from pipeline import export
+    ex = p(cfg, "export_dir")
+    mf = ex / "manifest.json"
+    if not mf.exists():
+        raise FileNotFoundError(f"{mf} not found; run `make export` first.")
+    manifest = json.loads(mf.read_text())
+    obs = ad.read_h5ad(p(cfg, "data"), backed="r").obs
+    gz, entry, info = export_payload(cfg, obs, pd.read_csv(out_dir(cfg) / "models.csv"))
+    (ex / EXPORT_FILE).write_bytes(gz)
+    entry["bytes"] = len(gz)
+    files = {k: v for k, v in manifest["files"].items() if k != "manifest.json"}
+    files[EXPORT_FILE] = entry
+    manifest.update(schema_version=export.SCHEMA_VERSION, fuzzy_upset=info, files=files)
+    mf.write_text(json.dumps(manifest, indent=1))
+    files["manifest.json"] = {"bytes": mf.stat().st_size, "dtype": "json", "description": "this index"}
+    (ex / "README.md").write_text(export.readme(manifest, files))
+    log.info(f"wrote {EXPORT_FILE}: {len(gz) / 1e6:.2f} MB gzipped ({entry['raw_bytes'] / 1e6:.2f} MB raw), "
+             f"{len(info['models'])} models x {len(info['columns'])} label columns")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--config", default=None)
-    ap.add_argument("--label", required=True, help="obs column whose labels are intersected")
+    ap.add_argument("--export", action="store_true", help="only (re)write the browser file into the existing web export")
+    ap.add_argument("--label", help="obs column whose labels are intersected")
     ap.add_argument("--tau", type=float, default=0.1)
     ap.add_argument("--max-size", type=int, default=3)
     ap.add_argument("--normalize", action="store_true", help="threshold enrichment P/freq instead of P")
@@ -336,6 +412,10 @@ def main():
     ap.add_argument("--show-pure", action="store_true")
     args = ap.parse_args()
     cfg = load_config(args.config)
+    if args.export:
+        return patch_export(cfg)
+    if not args.label:
+        ap.error("--label is required (or use --export)")
     spec = args.models if args.models in (None, "seed0", "all") else args.models.split(",")
     cmp = run(cfg, args.label, args.tau, args.max_size, args.normalize, spec)
     kw = {"pair": tuple(args.pair.split(","))} if args.how == "log_ratio" else {}

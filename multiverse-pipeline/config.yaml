@@ -96,6 +96,16 @@ ec:                             # export for the embedding-comparison framework 
   n_cells: 1500                 # stratified subsample; that app draws one SVG mark per cell
   k_max: 30                     # matches the app's K_MAX (k slider 5-30)
 
+fuzzy_upset:                    # comparative fuzzy UpSet (pipeline/fuzzy_upset.py): which labels mix in each kNN graph
+  k: 15                         # directed kNN + self-loop -> memberships are exact multiples of 1/(k+1)
+  models: seed0                 # seed0 (one replicate per configuration, 48) | all | [model ids]
+  label_columns: [cell_type, sample, study, tissue]   # one UpSet per column; labels of different columns never mix
+  second_columns: [cell_type, sample, study, tissue]  # composition bar per intersection
+  second_default: sample
+  qc_columns: [total_counts, pct_mito, doublet_score]
+  tau: 0.1                      # default threshold (adjustable in the browser)
+  max_size: 3                   # default max labels per intersection; more -> "diffuse" bucket
+
 layouts:
   model_umap_n_neighbors: 10
   model_tsne_perplexity: 15     # t-SNE of models on precomputed A(a,b); capped below n_models/3

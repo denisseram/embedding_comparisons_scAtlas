@@ -1,6 +1,6 @@
 {
- "schema_version": "1.2.0",
- "generated_at": "2026-09-28T08:14:58+00:00",
+ "schema_version": "1.3.0",
+ "generated_at": "2026-09-28T11:03:49+00:00",
  "dataset": {
   "name": "toy",
   "n_cells": 5000,
@@ -2908,6 +2908,155 @@
   ],
   "recipe": "scanpy pp.neighbors(use_rep=latent, n_neighbors=15) + tl.umap, random_state=20260927"
  },
+ "fuzzy_upset": {
+  "file": "fuzzy_memberships.bin.gz",
+  "k": 15,
+  "models": [
+   "pca.n500.ba0.ex0.study.s0",
+   "harmony.n500.ba0.ex0.study.s0",
+   "combat_pca.n500.ba0.ex0.study.s0",
+   "pca.n500.ba0.ex0.sample.s0",
+   "harmony.n500.ba0.ex0.sample.s0",
+   "combat_pca.n500.ba0.ex0.sample.s0",
+   "pca.n500.ba0.ex1.study.s0",
+   "harmony.n500.ba0.ex1.study.s0",
+   "combat_pca.n500.ba0.ex1.study.s0",
+   "pca.n500.ba0.ex1.sample.s0",
+   "harmony.n500.ba0.ex1.sample.s0",
+   "combat_pca.n500.ba0.ex1.sample.s0",
+   "pca.n500.ba1.ex0.study.s0",
+   "harmony.n500.ba1.ex0.study.s0",
+   "combat_pca.n500.ba1.ex0.study.s0",
+   "pca.n500.ba1.ex0.sample.s0",
+   "harmony.n500.ba1.ex0.sample.s0",
+   "combat_pca.n500.ba1.ex0.sample.s0",
+   "pca.n500.ba1.ex1.study.s0",
+   "harmony.n500.ba1.ex1.study.s0",
+   "combat_pca.n500.ba1.ex1.study.s0",
+   "pca.n500.ba1.ex1.sample.s0",
+   "harmony.n500.ba1.ex1.sample.s0",
+   "combat_pca.n500.ba1.ex1.sample.s0",
+   "pca.n1500.ba0.ex0.study.s0",
+   "harmony.n1500.ba0.ex0.study.s0",
+   "combat_pca.n1500.ba0.ex0.study.s0",
+   "pca.n1500.ba0.ex0.sample.s0",
+   "harmony.n1500.ba0.ex0.sample.s0",
+   "combat_pca.n1500.ba0.ex0.sample.s0",
+   "pca.n1500.ba0.ex1.study.s0",
+   "harmony.n1500.ba0.ex1.study.s0",
+   "combat_pca.n1500.ba0.ex1.study.s0",
+   "pca.n1500.ba0.ex1.sample.s0",
+   "harmony.n1500.ba0.ex1.sample.s0",
+   "combat_pca.n1500.ba0.ex1.sample.s0",
+   "pca.n1500.ba1.ex0.study.s0",
+   "harmony.n1500.ba1.ex0.study.s0",
+   "combat_pca.n1500.ba1.ex0.study.s0",
+   "pca.n1500.ba1.ex0.sample.s0",
+   "harmony.n1500.ba1.ex0.sample.s0",
+   "combat_pca.n1500.ba1.ex0.sample.s0",
+   "pca.n1500.ba1.ex1.study.s0",
+   "harmony.n1500.ba1.ex1.study.s0",
+   "combat_pca.n1500.ba1.ex1.study.s0",
+   "pca.n1500.ba1.ex1.sample.s0",
+   "harmony.n1500.ba1.ex1.sample.s0",
+   "combat_pca.n1500.ba1.ex1.sample.s0"
+  ],
+  "columns": [
+   {
+    "name": "cell_type",
+    "levels": [
+     "B",
+     "Ciliated",
+     "Epithelial",
+     "Myeloid",
+     "NK",
+     "T-A",
+     "T-B"
+    ],
+    "offset": 0,
+    "freq": [
+     0.1574,
+     0.084,
+     0.149,
+     0.1982,
+     0.1,
+     0.1672,
+     0.1442
+    ],
+    "n_unlabelled": 0,
+    "warnings": []
+   },
+   {
+    "name": "sample",
+    "levels": [
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5",
+     "s6"
+    ],
+    "offset": 7,
+    "freq": [
+     0.1654,
+     0.1416,
+     0.154,
+     0.183,
+     0.1662,
+     0.1898
+    ],
+    "n_unlabelled": 0,
+    "warnings": []
+   },
+   {
+    "name": "study",
+    "levels": [
+     "A",
+     "B"
+    ],
+    "offset": 13,
+    "freq": [
+     0.461,
+     0.539
+    ],
+    "n_unlabelled": 0,
+    "warnings": []
+   },
+   {
+    "name": "tissue",
+    "levels": [
+     "tissue1",
+     "tissue2"
+    ],
+    "offset": 15,
+    "freq": [
+     0.644,
+     0.356
+    ],
+    "n_unlabelled": 0,
+    "warnings": []
+   }
+  ],
+  "n_levels": 17,
+  "second_columns": [
+   "cell_type",
+   "sample",
+   "study",
+   "tissue"
+  ],
+  "second_default": "sample",
+  "qc_columns": [
+   "total_counts",
+   "pct_mito",
+   "doublet_score"
+  ],
+  "defaults": {
+   "tau": 0.1,
+   "max_size": 3,
+   "normalize": false,
+   "hide_pure": true
+  }
+ },
  "files": {
   "models.json": {
    "dtype": "json",
@@ -3017,6 +3166,19 @@
    "description": "per-embedding UMAP (scanpy neighbors on the model's latent + tl.umap), quantised: x = min + q/65535*(max-min) with min/max per model in manifest.umap_models; visual QC only",
    "order": "[model, cell, (x, y)]",
    "bytes": 2880000
+  },
+  "fuzzy_memberships.bin.gz": {
+   "dtype": "uint8",
+   "shape": [
+    48,
+    5000,
+    17
+   ],
+   "encoding": "gzip",
+   "raw_bytes": 4080000,
+   "description": "fuzzy UpSet: neighbour label counts (self included) in each model's directed k=15 kNN graph; membership P = count/16. Levels of all label columns concatenated (manifest.fuzzy_upset.columns[].offset). Gzip-compressed.",
+   "order": "[model, cell, level], model order = manifest.fuzzy_upset.models",
+   "bytes": 830142
   }
  }
 }

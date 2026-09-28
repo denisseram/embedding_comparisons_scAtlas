@@ -34,6 +34,9 @@ def test_binary_shapes_match_bytes(manifest):
     for name, f in manifest["files"].items():
         if f["dtype"] in ("json",):
             continue
+        if f.get("encoding") == "gzip":  # compressed on disk; the raw size is checked instead
+            assert np.prod(f["shape"]) * np.dtype(f["dtype"]).itemsize == f["raw_bytes"], name
+            continue
         assert np.prod(f["shape"]) * np.dtype(f["dtype"]).itemsize == f["bytes"], name
 
 
@@ -56,6 +59,28 @@ def test_umap_models(manifest):
     assert manifest["files"]["umap_models.bin"]["shape"] == [d["n_models"], d["n_cells"], 2]
     lo, hi = np.array(manifest["umap_models"]["min"]), np.array(manifest["umap_models"]["max"])
     assert lo.shape == hi.shape == (d["n_models"], 2) and (hi >= lo).all()
+
+
+def test_fuzzy_memberships(manifest):
+    import gzip
+    fu = manifest.get("fuzzy_upset")
+    if not fu:
+        pytest.skip("fuzzy UpSet not exported")
+    N = manifest["dataset"]["n_cells"]
+    shape = manifest["files"][fu["file"]]["shape"]
+    assert shape == [len(fu["models"]), N, fu["n_levels"]]
+    assert set(fu["models"]) <= set(manifest["model_order"])
+    C = np.frombuffer(gzip.decompress((EX / fu["file"]).read_bytes()), np.uint8).reshape(shape)
+    for col in fu["columns"]:
+        s = C[:, :, col["offset"]:col["offset"] + len(col["levels"])].sum(axis=2)
+        assert s.max() <= fu["k"] + 1
+        if col["n_unlabelled"] == 0:
+            assert (s == fu["k"] + 1).all(), col["name"]  # every neighbourhood (incl. self) fully labelled
+    cells = json.loads((EX / "cells.json").read_text())
+    for c in fu["second_columns"]:
+        assert c in cells["categorical"]
+    for c in fu["qc_columns"]:
+        assert c in cells["numeric"]
 
 
 def test_agreement_symmetric_zero_diagonal(manifest):

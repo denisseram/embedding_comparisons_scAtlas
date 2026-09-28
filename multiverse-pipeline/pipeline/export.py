@@ -18,12 +18,14 @@ import numpy as np
 import pandas as pd
 import scipy.sparse as sp
 
+from pipeline import fuzzy_upset
 from pipeline.common import append_runtime, get_logger, load_config, out_dir, p
 from pipeline.integrate import FACTORS
 
 log = get_logger("export")
 warnings.filterwarnings("ignore")
-SCHEMA_VERSION = "1.2.0"  # 1.1: models.json layout gains "tsne"; 1.2: optional umap_models.bin
+SCHEMA_VERSION = "1.3.0"  # 1.1: models.json layout gains "tsne"; 1.2: optional umap_models.bin;
+#                          1.3: optional fuzzy_memberships.bin.gz (gzip) + manifest.fuzzy_upset
 
 
 def classical_mds(D: np.ndarray, dim: int = 2) -> np.ndarray:
@@ -235,6 +237,14 @@ def main(cfg: dict | None = None) -> dict:
         umap_info = {"min": lo.round(4).tolist(), "max": hi.round(4).tolist(),
                      "recipe": f"scanpy pp.neighbors(use_rep=latent, n_neighbors={cfg['per_model_umap'].get('n_neighbors', 15)}) + tl.umap, random_state={gs}"}
 
+    # ---- fuzzy_memberships.bin.gz (comparative fuzzy UpSet, optional) ------------------------------
+    fuzzy_info = None
+    fz = fuzzy_upset.export_payload(cfg, obs, models)
+    if fz:
+        gz, entry, fuzzy_info = fz
+        (ex / fuzzy_upset.EXPORT_FILE).write_bytes(gz)
+        files[fuzzy_upset.EXPORT_FILE] = entry
+
     # ---- manifest ---------------------------------------------------------------------------
     for name in files:
         files[name]["bytes"] = (ex / name).stat().st_size
@@ -263,6 +273,7 @@ def main(cfg: dict | None = None) -> dict:
         "pairs": pairs.to_dict("records"),
         "cell_measures": [{"index": i, **l} for i, l in enumerate(layout)],
         "umap_models": umap_info,
+        "fuzzy_upset": fuzzy_info,
         "files": files,
     }
     (ex / "manifest.json").write_text(json.dumps(manifest, indent=1))

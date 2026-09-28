@@ -4,7 +4,7 @@ PY ?= $(shell conda run -n multiverse which python 2>/dev/null || echo python)
 CONFIG ?= config.yaml
 export MV_CONFIG = $(CONFIG)
 
-.PHONY: all data run export export-ec test validate smoke scale clean
+.PHONY: all data run export export-fuzzy export-ec test validate smoke scale clean
 
 all: data run test validate
 
@@ -16,6 +16,9 @@ run:             ## preprocess -> integrate -> kNN -> metrics -> measures -> reg
 
 export:          ## re-export web files only
 	$(PY) -m pipeline.export
+
+export-fuzzy:    ## add/refresh only the fuzzy UpSet file in the existing web export
+	$(PY) -m pipeline.fuzzy_upset --export
 
 export-ec:       ## export the embeddings for the embedding-comparison app (../embedding-comparison/public/data/integration)
 	$(PY) -m pipeline.export_ec
