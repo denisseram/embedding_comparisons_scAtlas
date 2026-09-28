@@ -195,6 +195,25 @@ def simulate(cfg: dict) -> tuple[ad.AnnData, pd.DataFrame, dict]:
         chunks.append(sp.csr_matrix(X))
     X = sp.vstack(chunks).tocsr()
 
+    # Ground-truth "neutral" space (no random draws, so the counts above are unchanged):
+    # each cell's noise-free, batch-free biological profile — cell type (+ IFN state), without
+    # study/sample effects, IGX modules or low-QC damping; doublets = mean of their two profiles.
+    def norm_profile(lp: np.ndarray) -> np.ndarray:
+        w = np.exp(lp - lp.max())
+        return w / w.sum()
+
+    truth = np.empty((N, G), np.float32)
+    for i in range(N):
+        lp = prof[obs["cell_type"].iat[i]].copy()
+        if ifn_on[i]:
+            lp[groups["ifn"]] += 1.5
+        pr = norm_profile(lp)
+        if is_dbl[i]:
+            pr = 0.5 * (pr + norm_profile(prof[partner[i]]))
+        truth[i] = np.log1p(1e4 * pr)
+    from sklearn.decomposition import PCA
+    X_truth = PCA(n_components=20, random_state=cfg["global_seed"]).fit_transform(truth).astype(np.float32)
+
     total = np.asarray(X.sum(1)).ravel()
     mito = np.asarray(X[:, groups["mito"]].sum(1)).ravel()
     obs["total_counts"] = total.astype(np.float32)
@@ -230,6 +249,7 @@ def simulate(cfg: dict) -> tuple[ad.AnnData, pd.DataFrame, dict]:
     adata = ad.AnnData(X=X.astype(np.float32), obs=obs, var=var)
     adata.layers["counts"] = X
     adata.uns["planted"] = {"igx_modules": [names[m].tolist() for m in igx_modules]}
+    adata.obsm["X_truth"] = X_truth  # 20-PC ground-truth biological space (simulation only)
 
     gene_sets = {
         "markers_T-A": names[np.r_[groups["mk_T"], groups["p1_TA"]]].tolist(),

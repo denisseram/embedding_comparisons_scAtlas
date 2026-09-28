@@ -11,6 +11,7 @@ paths:
   gene_sets: data/gene_sets.json
   outputs: outputs/toy          # heavy intermediates (gitignored)
   export_dir: ../integration/public/multiverse-data
+  ec_export_dir: ../embedding-comparison/public/data/integration   # for the embedding-comparison app
 
 simulate:
   n_cells: 5000
@@ -90,6 +91,10 @@ variants:
 per_model_umap:                 # standard scanpy UMAP of every embedding, for visual QC only
   enabled: true                 # ~5 min for 144 models at 5k cells (4 workers)
   n_neighbors: 15
+
+ec:                             # export for the embedding-comparison framework (pipeline/export_ec.py)
+  n_cells: 1500                 # stratified subsample; that app draws one SVG mark per cell
+  k_max: 30                     # matches the app's K_MAX (k slider 5-30)
 
 layouts:
   model_umap_n_neighbors: 10

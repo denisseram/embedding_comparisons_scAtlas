@@ -11,3 +11,6 @@ multiverse-pipeline/data/*ground_truth.csv
 multiverse-pipeline/data/*gene_sets.json
 
 .DS_Store
+
+# separate git repository (embedding-comparison app); not part of this repo
+embedding-comparison/

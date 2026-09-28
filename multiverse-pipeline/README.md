@@ -135,6 +135,35 @@ colour keys, `layout`, `referenceModel` and the measure mode.
   "fraction changed".
 - "Reset selection" clears everything.
 
+## Embedding-comparison framework
+
+The integration embeddings can also be analysed with the embedding-stability framework in
+`../embedding-comparison` (a separate git repository; changes are on its branch `integration-dataset`).
+That framework compares a small ensemble of embeddings through:
+- a **meta-map** of embedding × embedding dissimilarity;
+- **consensus neighbours** (proposed by a quorum of embeddings);
+- per-cell **magnitude** (1 − mean Jaccard to the consensus);
+- **severity** (how far disputed neighbours sit, compared with consensus ones, in a neutral space no embedding sees);
+- **agreement patterns**.
+
+```bash
+make export-ec                                   # ~10 s → ../embedding-comparison/public/data/integration (15 MB, gitignored there)
+cd ../embedding-comparison && npm run dev         # open /?dataset=integration
+npx tsx scripts/analyze-integration.ts 12 0.5 truth   # Markdown report; saved runs in reports/
+```
+
+Choices made for the export (`pipeline/export_ec.py`):
+- **Cells:** a stratified subsample of 1,499 cells, because the app draws one SVG mark per cell.
+- **Neighbours:** kNN in each model's **latent** space, recomputed within the subsample. Each view draws that model's own UMAP.
+- **Ensembles:** four presets.
+  - 3 methods × 2 batch keys
+  - the reference setup × 3 seeds
+  - Harmony × all feature choices
+  - all 48 configurations
+- **Severity spaces:**
+  - **True biology**: the simulator's noise-free, batch-free profile, added to `toy.h5ad` as `obsm["X_truth"]` without changing any counts. It is simulation-only and has exact ties, so severity uses additive smoothing (dd + f)/(cc + f), with f = 5% of the median distance.
+  - **Observed expression**: uncorrected. It is available on real data, but it rewards leaving batch effects in place.
+
 ## Deploy
 
 The site is fully static: no adapter, no API routes. The dashboard fetches only
