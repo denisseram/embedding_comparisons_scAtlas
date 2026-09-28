@@ -183,6 +183,15 @@
   margin: 6px 0 0;
 }
 
+.mv-embed-panel {
+  min-width: 0;
+  border-top: 1px solid var(--grid);
+  padding-top: 8px;
+}
+.mv-embed-panel select {
+  max-width: 100%;
+}
+
 /* tabs */
 .mv-tabs {
   display: flex;

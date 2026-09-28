@@ -40,6 +40,7 @@ export interface Manifest {
   neighbor_models: string[];
   pairs: Pair[];
   cell_measures: { index: number; name: string; description: string }[];
+  umap_models?: { min: [number, number][]; max: [number, number][]; recipe: string } | null;
   files: Record<string, FileEntry>;
 }
 
@@ -137,7 +138,7 @@ async function fetchJson<T>(name: string): Promise<T> {
   }
 }
 
-const CTORS = { float32: Float32Array, uint32: Uint32Array } as const;
+const CTORS = { float32: Float32Array, uint32: Uint32Array, uint16: Uint16Array } as const;
 
 async function fetchBin<K extends keyof typeof CTORS>(
   manifest: Manifest,
@@ -221,6 +222,39 @@ export async function loadZ(manifest: Manifest, mode: string): Promise<{ z: Floa
   const R = entry.shape[0];
   const z = await fetchBin(manifest, name, 'float32', [R, N, M]);
   return { z, refs: manifest.references.slice(0, R) };
+}
+
+export interface ModelUmaps {
+  q: Uint16Array; // [M, N, 2] quantised
+  min: [number, number][];
+  max: [number, number][];
+  recipe: string;
+}
+
+/** Per-embedding UMAPs (visual QC of each integration); null if the export has none. */
+export async function loadModelUmaps(manifest: Manifest): Promise<ModelUmaps | null> {
+  if (!manifest.umap_models) return null;
+  const M = manifest.dataset.n_models;
+  const N = manifest.dataset.n_cells;
+  const q = await fetchBin(manifest, 'umap_models.bin', 'uint16', [M, N, 2]);
+  const { min, max, recipe } = manifest.umap_models;
+  if (min.length !== M || max.length !== M) throw new DataError('manifest.umap_models min/max do not match n_models.');
+  return { q, min, max, recipe };
+}
+
+/** Decode one model's UMAP coordinates. */
+export function modelUmap(u: ModelUmaps, m: number, N: number): { x: Float32Array; y: Float32Array } {
+  const x = new Float32Array(N);
+  const y = new Float32Array(N);
+  const [x0, y0] = u.min[m];
+  const sx = (u.max[m][0] - x0) / 65535;
+  const sy = (u.max[m][1] - y0) / 65535;
+  const base = m * N * 2;
+  for (let c = 0; c < N; c++) {
+    x[c] = x0 + u.q[base + 2 * c] * sx;
+    y[c] = y0 + u.q[base + 2 * c + 1] * sy;
+  }
+  return { x, y };
 }
 
 export function cellArray(cd: CellData, name: string, N: number): Float32Array {

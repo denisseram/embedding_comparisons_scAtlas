@@ -37,6 +37,7 @@ seed is `20260927`.
 | HVG sets | `pipeline/preprocess.py` | `hvg_sets.json` (12 distinct feature sets) |
 | integrate | `pipeline/integrate.py` | `latent/<model_id>.npy` (30-d), `models.csv`: 48 configurations × 3 seeds = 144 embeddings |
 | kNN | `pipeline/knn.py` | `knn50.npy` [144, N, 50] (pynndescent in latent space; k=15 = first 15 columns) |
+| per-model UMAPs | `pipeline/umaps.py` | `umap_per_model.npy` [144, N, 2]: standard scanpy UMAP of each embedding, for visual QC only |
 | metrics | `pipeline/metrics.py` | `metrics.csv` (raw + min–max scaled, bio / batch / overall), `metrics_seed_sd.csv` |
 | measures | `pipeline/measures.py` | Δ, seed noise, z, E/H per factor, agreement A(a,b), consensus stability, z vs references |
 | regions | `pipeline/regions.py` | Leiden on the E-profile with a consensus-kNN spatial constraint; per-region compositions, QC, Wilcoxon top genes |
@@ -54,12 +55,13 @@ seed is `20260927`.
 | preprocess | 4.4 |
 | integrate (144 embeddings) | 25.9 |
 | kNN (pynndescent, k=50) | 120.0 |
+| per-model UMAPs (132 unique, 4 workers; added 2026-09-28) | 298.5 |
 | metrics (4 worker processes) | 89.4 |
 | measures (both modes) | 16.1 |
 | regions (both modes) | 3.8 |
 | variants (both modes) | 81.3 |
 | export | 26.6 |
-| **total** | **≈ 372 s (6.2 min)**, under the 15-minute target |
+| **total** | **≈ 670 s (11 min)** including per-model UMAPs, under the 15-minute target |
 
 Peak RSS: 0.85 GB for the main process (`ru_maxrss`). During the metrics step, the sampled RSS of the whole process tree (main + 4 workers, `pipeline/memwatch.py`, 0.5 s sampling) peaked at 0.71 GB. Sampling can miss short spikes, but everything stays far below the 8 GB of the machine.
 
@@ -88,8 +90,8 @@ for it are under "Browser checks".
 
 ## Web export and dashboard
 
-`pipeline/export.py` writes compact files to `integration/public/multiverse-data/`: 12 files,
-**20.0 MB** in total (budget 25 MB). Dtypes, shapes and orders are documented in the generated
+`pipeline/export.py` writes compact files to `integration/public/multiverse-data/`: 13 files,
+**22.9 MB** in total (budget 25 MB). Dtypes, shapes and orders are documented in the generated
 [`README.md` there](../integration/public/multiverse-data/README.md). The browser loader
 (`integration/src/components/multiverse/data/loader.ts`) validates every shape and byte count
 against `manifest.json` and shows a readable error on mismatch.
@@ -115,6 +117,7 @@ Everything that depends on a selection is computed in the browser:
 |---|---|
 | V0a model map | UMAP (precomputed A, n_neighbors=10), t-SNE (precomputed A, perplexity 15) or classical MDS of all models. The colour dropdown offers only multiverse measures (consensus share, mean Δ, fraction \|z\|>2 vs the reference) and decisions (every factor + seed). Seed replicates are joined by thin outlines. Hover, click, shift-click and lasso. |
 | V0b leaderboard | Top 10 for the benchmark metric chosen in its own **Rank by** dropdown (aggregates, raw or scaled metrics): sortable table with seed sd and an "≈1" marker when within noise of rank 1, or a D3 funky heatmap (setup / overall / batch / bio; bars and circles) |
+| Embeddings tab | the standard UMAP of **each** embedding (scanpy `pp.neighbors` on that model's latent + `tl.umap`), up to 4 side by side, coloured by sample / study / cell type / QC / any measure, with each model's iLISI, kBET, PCR, ARI and NMI. Defaults to the reference model and its counterparts with the other methods (same features and seed). Lasso selects cells everywhere. For checking integrations visually. |
 | V1 fixed cell map | UMAP of the consensus kNN graph on canvas (hex-binned density from 50,000 cells), coloured by any obs, QC, measure, region or z; quadtree hover, lasso, pan/zoom, click-to-highlight legend |
 | V2 stability map | all-model vs seed-only consensus stability side by side |
 | V3 agreement matrix | A(a,b) in factor order with factor strips; click selects both models |
@@ -163,7 +166,7 @@ run in CI because the data is committed.
 
 ## Browser checks
 
-`browser-checks/check.mjs` (Playwright, 41 checks) covers:
+`browser-checks/check.mjs` (Playwright, 44 checks) covers:
 
 - no console errors,
 - every view renders,
@@ -326,6 +329,10 @@ Modelling choices made while implementing the brief. Runtime fallbacks are also 
     - Regions (13–16) are **not** colour-coded categorically: they are coloured by total |E|
       and labelled directly.
 38. V4's "relative to factor median" is a display transform only and has not been validated.
+39. Per-embedding UMAPs (added 2026-09-28 at the user's request, for checking each integration visually):
+    scanpy `pp.neighbors(use_rep=latent, n_neighbors=15)` + `tl.umap`, fixed seed. Identical embeddings are
+    computed once. They are exported as uint16 (per-model min/max in the manifest, precision ≈ range/65535)
+    to stay under the size budget. Disabled in the scale config (about 1 min per model at 50k cells).
 
 ## Known limitations
 

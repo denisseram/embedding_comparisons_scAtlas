@@ -22,9 +22,12 @@ interface Props {
   zSel?: Float32Array | null;
   zLabel?: string;
   compact?: boolean;
+  /** alternative 2D coordinates (e.g. one embedding's own UMAP); defaults to the fixed consensus map */
+  coords?: { x: ArrayLike<number>; y: ArrayLike<number> };
+  ariaLabel?: string;
 }
 
-export default function CellMap({ colorKey, height = 480, title, regionEffects, zSel, zLabel, compact }: Props) {
+export default function CellMap({ colorKey, height = 480, title, regionEffects, zSel, zLabel, compact, coords, ariaLabel }: Props) {
   const { entry, cells } = useData();
   const cd = cells!;
   const { manifest } = entry;
@@ -45,22 +48,24 @@ export default function CellMap({ colorKey, height = 480, title, regionEffects, 
     [colorKey, cd, manifest, theme, state.mode, regionEffects, zSel, zLabel],
   );
 
+  const xs = coords?.x ?? cd.cells.x;
+  const ys = coords?.y ?? cd.cells.y;
   const base = useMemo(() => {
-    const x = d3.scaleLinear().domain(d3.extent(cd.cells.x) as [number, number]).range([12, width - 12]);
-    const y = d3.scaleLinear().domain(d3.extent(cd.cells.y) as [number, number]).range([height - 12, 12]);
+    const x = d3.scaleLinear().domain(d3.extent(Array.from(xs)) as [number, number]).range([12, width - 12]);
+    const y = d3.scaleLinear().domain(d3.extent(Array.from(ys)) as [number, number]).range([height - 12, 12]);
     return { x, y };
-  }, [cd, width, height]);
+  }, [xs, ys, width, height]);
 
   // screen positions under the current zoom
   const screen = useMemo(() => {
     const px = new Float32Array(N);
     const py = new Float32Array(N);
     for (let c = 0; c < N; c++) {
-      px[c] = transform.applyX(base.x(cd.cells.x[c]));
-      py[c] = transform.applyY(base.y(cd.cells.y[c]));
+      px[c] = transform.applyX(base.x(xs[c]));
+      py[c] = transform.applyY(base.y(ys[c]));
     }
     return { px, py };
-  }, [base, transform, cd, N]);
+  }, [base, transform, xs, ys, N]);
 
   const selectedMask = useMemo(() => {
     if (!state.selectedCells) return null;
@@ -210,7 +215,7 @@ export default function CellMap({ colorKey, height = 480, title, regionEffects, 
         </div>
       )}
       <div style={{ position: 'relative', width, height }}>
-        <canvas ref={canvas} style={{ width, height, display: 'block' }} role="img" aria-label={`Cell map of ${N} cells coloured by ${color.label}`} />
+        <canvas ref={canvas} style={{ width, height, display: 'block' }} role="img" aria-label={ariaLabel ?? `Cell map of ${N} cells coloured by ${color.label}`} />
         <svg
           ref={overlay}
           width={width}

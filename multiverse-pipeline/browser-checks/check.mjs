@@ -81,6 +81,17 @@ await page.mouse.click(mBox.x + mBox.width * 0.3, mBox.y + mBox.height * 0.6);
 check('V3 click selects two models', (await summary()).startsWith('2 models'));
 await page.getByRole('button', { name: 'Reset selection' }).click();
 
+// embeddings tab: per-model UMAPs
+await page.getByRole('tab', { name: /Embeddings/ }).click();
+await page.waitForSelector('[aria-label^="UMAP of embedding"]', { timeout: 20000 });
+const nPanels = await page.locator('[aria-label^="UMAP of embedding"]').count();
+check('embedding viewer shows per-model UMAPs', nPanels >= 2, `${nPanels} panels`);
+await page.getByLabel('Model for panel 4').selectOption({ index: 5 });
+await page.waitForTimeout(200);
+check('embedding panel model picker', (await page.locator('[aria-label^="UMAP of embedding"]').count()) === nPanels + 1);
+await page.getByLabel('Colour cells by').selectOption('cat:cell_type');
+check('embedding viewer recolours', (await page.locator('.mv-embed-panel .mv-swatches').first().innerText()).includes('T-A'));
+
 // cell tab
 await page.getByRole('tab', { name: /Cells/ }).click();
 await page.waitForSelector('#v1', { timeout: 15000 });

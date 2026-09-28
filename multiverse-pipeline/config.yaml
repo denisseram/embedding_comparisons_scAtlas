@@ -87,6 +87,10 @@ variants:
   min_subcluster_frac: 0.1
   joined_min_outside: 0.5
 
+per_model_umap:                 # standard scanpy UMAP of every embedding, for visual QC only
+  enabled: true                 # ~5 min for 144 models at 5k cells (4 workers)
+  n_neighbors: 15
+
 layouts:
   model_umap_n_neighbors: 10
   model_tsne_perplexity: 15     # t-SNE of models on precomputed A(a,b); capped below n_models/3

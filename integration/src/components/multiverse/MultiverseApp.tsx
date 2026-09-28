@@ -11,6 +11,7 @@ import './multiverse.css';
 const CellViews = lazy(() => import('./views/CellViews'));
 const AgreementMatrix = lazy(() => import('./views/AgreementMatrix'));
 const DecisionRecord = lazy(() => import('./views/DecisionRecord'));
+const EmbeddingViewer = lazy(() => import('./views/EmbeddingViewer'));
 
 export default function MultiverseApp() {
   const [entry, setEntry] = useState<EntryData | null>(null);
@@ -58,7 +59,7 @@ export default function MultiverseApp() {
   );
 }
 
-type Tab = 'models' | 'cells' | 'record';
+type Tab = 'models' | 'embeddings' | 'cells' | 'record';
 
 function Shell() {
   const { entry, fracZNote, zError, requestZ, zStatus } = useData();
@@ -165,6 +166,7 @@ function Shell() {
         {(
           [
             ['models', 'Models (V0a, V0b, V3)'],
+            ['embeddings', 'Embeddings (UMAP per model)'],
             ['cells', 'Cells & regions (V1–V7)'],
             ['record', 'Decision record (V8)'],
           ] as [Tab, string][]
@@ -192,6 +194,7 @@ function Shell() {
             </section>
           </div>
         )}
+        {tab === 'embeddings' && <EmbeddingViewer />}
         {tab === 'cells' && <CellViews />}
         {tab === 'record' && <DecisionRecord />}
       </Suspense>

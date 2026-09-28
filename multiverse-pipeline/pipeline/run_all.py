@@ -8,11 +8,11 @@ import argparse
 import json
 import time
 
-from pipeline import export, integrate, knn, measures, metrics, preprocess, regions, variants
+from pipeline import export, integrate, knn, measures, metrics, preprocess, regions, umaps, variants
 from pipeline.common import get_logger, load_config, out_dir, peak_rss_mb
 
 log = get_logger("run_all")
-STEPS = ["preprocess", "integrate", "knn", "metrics", "measures", "regions", "variants", "export"]
+STEPS = ["preprocess", "integrate", "knn", "umaps", "metrics", "measures", "regions", "variants", "export"]
 
 
 def main():
@@ -34,7 +34,7 @@ def main():
             for m in modes:
                 mod.main(cfg, mode=m)
         else:
-            {"preprocess": preprocess, "integrate": integrate, "knn": knn, "metrics": metrics,
+            {"preprocess": preprocess, "integrate": integrate, "knn": knn, "umaps": umaps, "metrics": metrics,
              "export": export}[step].main(cfg)
         timings[step] = round(time.perf_counter() - t0, 1)
         log.info(f"== {step} finished in {timings[step]}s (peak RSS of main process {peak_rss_mb():.0f} MB)")

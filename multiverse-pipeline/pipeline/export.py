@@ -23,7 +23,7 @@ from pipeline.integrate import FACTORS
 
 log = get_logger("export")
 warnings.filterwarnings("ignore")
-SCHEMA_VERSION = "1.1.0"  # 1.1: models.json layout gains "tsne"
+SCHEMA_VERSION = "1.2.0"  # 1.1: models.json layout gains "tsne"; 1.2: optional umap_models.bin
 
 
 def classical_mds(D: np.ndarray, dim: int = 2) -> np.ndarray:
@@ -220,6 +220,21 @@ def main(cfg: dict | None = None) -> dict:
     write_bin("neighbors_sample.bin", np.asarray(knn[idx, :, :k]), np.uint32,
               f"k={k} nearest-neighbour indices for the models in manifest.neighbor_models", "[model, cell, neighbour]")
 
+    # ---- umap_models.bin (per-embedding UMAPs for visual QC, optional) ------------------------
+    umap_info = None
+    upath = od / "umap_per_model.npy"
+    if upath.exists():
+        U = np.load(upath)
+        lo, hi = U.min(axis=1), U.max(axis=1)                    # [M, 2]
+        span = np.where(hi - lo > 0, hi - lo, 1.0)
+        q = np.round((U - lo[:, None, :]) / span[:, None, :] * 65535).astype(np.uint16)
+        write_bin("umap_models.bin", q, np.uint16,
+                  "per-embedding UMAP (scanpy neighbors on the model's latent + tl.umap), quantised: "
+                  "x = min + q/65535*(max-min) with min/max per model in manifest.umap_models; visual QC only",
+                  "[model, cell, (x, y)]")
+        umap_info = {"min": lo.round(4).tolist(), "max": hi.round(4).tolist(),
+                     "recipe": f"scanpy pp.neighbors(use_rep=latent, n_neighbors={cfg['per_model_umap'].get('n_neighbors', 15)}) + tl.umap, random_state={gs}"}
+
     # ---- manifest ---------------------------------------------------------------------------
     for name in files:
         files[name]["bytes"] = (ex / name).stat().st_size
@@ -247,6 +262,7 @@ def main(cfg: dict | None = None) -> dict:
         "neighbor_models": chosen,
         "pairs": pairs.to_dict("records"),
         "cell_measures": [{"index": i, **l} for i, l in enumerate(layout)],
+        "umap_models": umap_info,
         "files": files,
     }
     (ex / "manifest.json").write_text(json.dumps(manifest, indent=1))

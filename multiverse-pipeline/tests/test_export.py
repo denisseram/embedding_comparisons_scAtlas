@@ -49,6 +49,15 @@ def test_shapes_consistent_with_manifest(manifest):
     assert len(manifest["model_order"]) == M and len(manifest["pairs"]) == P
 
 
+def test_umap_models(manifest):
+    if not manifest.get("umap_models"):
+        pytest.skip("per-model UMAPs disabled")
+    d = manifest["dataset"]
+    assert manifest["files"]["umap_models.bin"]["shape"] == [d["n_models"], d["n_cells"], 2]
+    lo, hi = np.array(manifest["umap_models"]["min"]), np.array(manifest["umap_models"]["max"])
+    assert lo.shape == hi.shape == (d["n_models"], 2) and (hi >= lo).all()
+
+
 def test_agreement_symmetric_zero_diagonal(manifest):
     M = manifest["dataset"]["n_models"]
     A = np.fromfile(EX / "agreement.bin", "<f4").reshape(M, M)
