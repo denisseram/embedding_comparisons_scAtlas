@@ -164,3 +164,63 @@ def test_synthetic_mixing_detected_and_ranked_first():
     assert r2.labels.iloc[0] == key and r2.score.iloc[0] > 5
     assert (levels.index("other"),) not in set(ranked(cmp).labels)  # pure hidden by default
     assert not ranked(cmp, hide_pure=False).empty
+
+
+# ---- parity with the browser implementation (compute/fuzzyUpset.ts, run under Node) -------------------
+
+@pytest.mark.parametrize("k", [15, 9])
+def test_browser_parity(tmp_path, k):
+    import base64
+    import json
+    import shutil
+    import subprocess
+    from pathlib import Path
+
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("node not installed")
+    rng = np.random.default_rng(k)
+    N, n_models = 400, 3
+    cols = []
+    for name, L in [("ct", 5), ("batch", 3)]:
+        codes = rng.integers(0, L, N).astype(np.int32)
+        codes[rng.random(N) < 0.05] = -1  # unlabelled cells
+        cols.append((name, codes, L))
+    counts, Ps = [], []
+    for m in range(n_models):
+        # blocky graphs with model-specific mixing
+        blk = np.arange(N) * 4 // N
+        knn = np.where(rng.random((N, k)) < 0.2 * m, rng.integers(0, N, (N, k)),
+                       blk[:, None] * (N // 4) + rng.integers(0, N // 4, (N, k)))
+        counts.append(np.concatenate([membership_counts(knn, c, L) for _, c, L in cols], axis=1))
+        Ps.append([memberships(knn, c, L) for _, c, L in cols])
+    offs = np.cumsum([0] + [L for _, _, L in cols])
+    info = {"k": k, "n_levels": int(offs[-1]), "models": [f"m{m}" for m in range(n_models)],
+            "columns": [{"name": n, "levels": [str(i) for i in range(L)], "offset": int(offs[i]),
+                         "freq": [float(x) for x in label_frequency(c, L)]} for i, (n, c, L) in enumerate(cols)]}
+    cases = [{"col": ci, "tau": tau, "max_size": ms, "normalize": nz}
+             for ci in range(len(cols)) for tau in [0.1, 0.2, 0.3, 1 / (k + 1), 1.0] for ms in [1, 3] for nz in [False, True]]
+    fx = tmp_path / "fixture.json"
+    fx.write_text(json.dumps({"N": N, "info": info, "cases": cases,
+                              "counts": base64.b64encode(np.stack(counts).tobytes()).decode()}))
+    runner = Path(__file__).with_name("fuzzy_parity_runner.mjs")
+    res = subprocess.run([node, "--experimental-strip-types", "--no-warnings", str(runner), str(fx)],
+                         capture_output=True, text=True, check=True)
+    js = json.loads(res.stdout)
+    for cs, out in zip(cases, js):
+        _, codes, L = cols[cs["col"]]
+        freq = label_frequency(codes, L)
+        per = {}
+        for m in range(n_models):
+            s = signatures(Ps[m][cs["col"]], cs["tau"], cs["max_size"], cs["normalize"], freq)
+            per[f"m{m}"] = s
+            py_sig = [",".join(map(str, s.intersections[x])) if x >= 0 else int(x) for x in s.sig]
+            assert py_sig == out["models"][m]["sig"], cs
+            assert np.allclose(s.strength, out["models"][m]["strength"]), cs
+            assert (s.n_none, s.n_diffuse) == (out["models"][m]["n_none"], out["models"][m]["n_diffuse"])
+        fz = compare({m: Ps[int(m[1:])][cs["col"]] for m in per}, info["columns"][cs["col"]]["levels"],
+                     cs["tau"], cs["max_size"], cs["normalize"], freq).fuzzy
+        py = {",".join(map(str, t)): fz.loc[[t]].iloc[0].tolist() for t in fz.index}
+        assert py.keys() == out["fuzzy"].keys(), cs
+        for key in py:
+            assert np.allclose(py[key], out["fuzzy"][key]), (cs, key)

@@ -353,7 +353,7 @@ def export_payload(cfg: dict, obs: pd.DataFrame, models: pd.DataFrame) -> tuple[
     for c in fc["label_columns"]:
         codes, levels = label_codes(obs[c].to_numpy(object))
         enc.append((codes, len(levels)))
-        cols.append({"name": c, "levels": levels, "offset": off, "freq": [round(float(x), 6) for x in label_frequency(codes, len(levels))],
+        cols.append({"name": c, "levels": levels, "offset": off, "freq": [float(x) for x in label_frequency(codes, len(levels))],
                      "n_unlabelled": int((codes < 0).sum()), "warnings": label_warnings(codes, levels)})
         off += len(levels)
     N = len(obs)

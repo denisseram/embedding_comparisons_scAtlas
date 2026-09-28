@@ -1,5 +1,6 @@
 // Fetches the static files written by multiverse-pipeline/pipeline/export.py and validates
 // every shape against manifest.json. Only static files under <base>/multiverse-data/ are used.
+import type { FuzzyInfo } from '../compute/fuzzyUpset';
 
 export interface FileEntry {
   dtype: string;
@@ -7,6 +8,8 @@ export interface FileEntry {
   bytes: number;
   order?: string;
   description?: string;
+  encoding?: 'gzip';
+  raw_bytes?: number;
 }
 
 export interface Pair {
@@ -41,6 +44,7 @@ export interface Manifest {
   pairs: Pair[];
   cell_measures: { index: number; name: string; description: string }[];
   umap_models?: { min: [number, number][]; max: [number, number][]; recipe: string } | null;
+  fuzzy_upset?: FuzzyInfo | null;
   files: Record<string, FileEntry>;
 }
 
@@ -255,6 +259,26 @@ export function modelUmap(u: ModelUmaps, m: number, N: number): { x: Float32Arra
     y[c] = y0 + u.q[base + 2 * c + 1] * sy;
   }
   return { x, y };
+}
+
+/** Fuzzy UpSet neighbour-label counts [model, cell, level] (gzip on disk); null if the export has none. */
+export async function loadFuzzy(manifest: Manifest): Promise<Uint8Array | null> {
+  const info = manifest.fuzzy_upset;
+  if (!info) return null;
+  const entry = manifest.files[info.file];
+  if (!entry?.shape || entry.dtype !== 'uint8') throw new DataError(`manifest.json does not list ${info.file} as uint8.`);
+  const expect = [info.models.length, manifest.dataset.n_cells, info.n_levels];
+  if (entry.shape.join() !== expect.join()) throw new DataError(`${info.file}: manifest shape [${entry.shape}] does not match expected [${expect}].`);
+  let buf = new Uint8Array(await (await fetchOk(info.file)).arrayBuffer());
+  // hosts that serve .gz with Content-Encoding: gzip hand us already-decompressed bytes
+  if (buf[0] === 0x1f && buf[1] === 0x8b) {
+    if (typeof DecompressionStream === 'undefined') throw new DataError('This browser cannot decompress gzip (DecompressionStream missing).');
+    const stream = new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'));
+    buf = new Uint8Array(await new Response(stream).arrayBuffer());
+  }
+  const n = expect.reduce((a, b) => a * b, 1);
+  if (buf.byteLength !== n) throw new DataError(`${info.file}: decompressed to ${buf.byteLength} bytes, expected ${n}.`);
+  return buf;
 }
 
 export function cellArray(cd: CellData, name: string, N: number): Float32Array {
